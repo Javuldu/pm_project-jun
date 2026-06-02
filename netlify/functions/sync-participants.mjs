@@ -1,15 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import XLSX from 'xlsx';
-import { fileURLToPath } from 'url';
-import path from 'path';
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -20,8 +15,21 @@ export const handler = async (event) => {
   }
 
   try {
-    const excelPath = path.resolve(__dirname, 'BD participantes.xlsx');
-    const wb = XLSX.readFile(excelPath);
+    const body = JSON.parse(event.body || '{}');
+    let wb;
+
+    if (body.fileData) {
+      const buf = Buffer.from(body.fileData, 'base64');
+      wb = XLSX.read(buf, { type: 'buffer' });
+    } else {
+      const { fileURLToPath } = await import('url');
+      const path = await import('path');
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const excelPath = path.resolve(__dirname, 'BD participantes.xlsx');
+      wb = XLSX.readFile(excelPath);
+    }
+
     const sheet = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 

@@ -75,14 +75,15 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
 
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleSyncParticipants = async () => {
+  const doSync = async (body: object) => {
     setSyncing(true);
     setSyncMessage(null);
     try {
       const API_URL = import.meta.env.VITE_API_URL || '';
       const url = API_URL ? `${API_URL}/api/sync-participants` : '/api/sync-participants';
-      const res = await fetch(url, { method: 'POST' });
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await res.json();
       if (data.success) {
         setSyncMessage(`✅ ${data.message}`);
@@ -94,6 +95,28 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
     } finally {
       setSyncing(false);
     }
+  };
+
+  const handleSyncParticipants = async () => {
+    await doSync({});
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const arrayBuf = evt.target?.result as ArrayBuffer;
+      const bytes = new Uint8Array(arrayBuf);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      const base64 = btoa(binary);
+      await doSync({ fileData: base64 });
+    };
+    reader.readAsArrayBuffer(file);
+    // Reset input so same file can be re-uploaded
+    e.target.value = '';
   };
 
   const handleExportData = () => {
@@ -142,6 +165,16 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
             <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
             {syncing ? 'Sincronizando...' : 'Sync Excel'}
           </button>
+          <label className="bg-white border border-slate-200 text-slate-700 font-bold py-2 px-4 rounded-lg shadow-sm hover:bg-slate-50 transition text-sm cursor-pointer">
+            Subir Excel
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </label>
           <button 
             onClick={handleSaveAll}
             className="bg-secondary text-white font-bold py-2 px-6 rounded-lg shadow-sm hover:bg-red-700 transition"
