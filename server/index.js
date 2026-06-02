@@ -28,7 +28,11 @@ const supabase = createClient(
 
 const EXCEL_PATH = path.resolve(__dirname, '..', 'BD participantes.xlsx');
 
-// ─── Auth: validate participant against Supabase ───
+function apiUrl(req) {
+  return req.protocol + '://' + req.get('host');
+}
+
+// ─── Auth ───
 app.post('/api/auth/participant', async (req, res) => {
   const { name, code } = req.body;
   if (!name || !code) {
@@ -55,7 +59,163 @@ app.post('/api/auth/participant', async (req, res) => {
   }
 });
 
-// ─── Sync: read Excel and upsert into Supabase ───
+// ─── Load all data for a user ───
+app.get('/api/data/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const [matchesRes, predictionsRes, championRes, configRes] = await Promise.all([
+      supabase.from('match_data').select('*').order('id'),
+      supabase.from('prediction_data').select('*').eq('user_id', userId),
+      supabase.from('champion_data').select('*'),
+      supabase.from('app_config').select('*'),
+    ]);
+
+    if (matchesRes.error) throw matchesRes.error;
+    if (predictionsRes.error) throw predictionsRes.error;
+    if (championRes.error) throw championRes.error;
+    if (configRes.error) throw configRes.error;
+
+    const matches = matchesRes.data.map(m => ({
+      id: m.id,
+      teamA: m.team_a_id,
+      teamB: m.team_b_id,
+      date: m.date,
+      stage: m.stage,
+      isFinished: m.is_finished,
+      realScoreA: m.real_score_a,
+      realScoreB: m.real_score_b,
+      isLocked: m.is_locked,
+    }));
+
+    const userPredictions = predictionsRes.data.map(p => ({
+      matchId: p.match_id,
+      scoreA: p.score_a,
+      scoreB: p.score_b,
+    }));
+
+    const championPredictions = {};
+    championRes.data.forEach(c => {
+      championPredictions[c.user_id] = c.champion_team_id;
+    });
+
+    const officialChampion = (configRes.data.find(c => c.key === 'official_champion') || {}).value || '';
+
+    res.json({ matches, userPredictions, championPredictions, officialChampion });
+  } catch (err) {
+    console.error('Load data error:', err);
+    res.status(500).json({ error: 'Error al cargar datos.' });
+  }
+});
+
+// ─── Save predictions ───
+app.post('/api/predictions', async (req, res) => {
+  const { userId, predictions } = req.body;
+  if (!userId || !predictions) {
+    return res.status(400).json({ error: 'userId y predictions requeridos.' });
+  }
+
+  try {
+    const { error: delError } = await supabase
+      .from('prediction_data')
+      .delete()
+      .eq('user_id', userId);
+
+    if (delError) throw delError;
+
+    if (predictions.length > 0) {
+      const rows = predictions.map(p => ({
+        user_id: userId,
+        match_id: p.matchId,
+        score_a: p.scoreA ?? null,
+        score_b: p.scoreB ?? null,
+      }));
+
+      const { error: insError } = await supabase
+        .from('prediction_data')
+        .insert(rows);
+
+      if (insError) throw insError;
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Save predictions error:', err);
+    res.status(500).json({ error: 'Error al guardar pronósticos.' });
+  }
+});
+
+// ─── Save champion prediction ───
+app.post('/api/champion', async (req, res) => {
+  const { userId, championTeamId } = req.body;
+  if (!userId || !championTeamId) {
+    return res.status(400).json({ error: 'userId y championTeamId requeridos.' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('champion_data')
+      .upsert({ user_id: userId, champion_team_id: championTeamId }, { onConflict: 'user_id' });
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Save champion error:', err);
+    res.status(500).json({ error: 'Error al guardar campeón.' });
+  }
+});
+
+// ─── Save matches (admin) ───
+app.post('/api/matches', async (req, res) => {
+  const { matches } = req.body;
+  if (!matches) {
+    return res.status(400).json({ error: 'matches requerido.' });
+  }
+
+  try {
+    for (const m of matches) {
+      const { error } = await supabase
+        .from('match_data')
+        .upsert({
+          id: m.id,
+          team_a_id: m.teamA?.id || m.teamA,
+          team_b_id: m.teamB?.id || m.teamB,
+          date: m.date,
+          stage: m.stage,
+          is_finished: m.isFinished,
+          real_score_a: m.realScoreA ?? null,
+          real_score_b: m.realScoreB ?? null,
+          is_locked: m.isLocked ?? false,
+        }, { onConflict: 'id' });
+
+      if (error) throw error;
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Save matches error:', err);
+    res.status(500).json({ error: 'Error al guardar partidos.' });
+  }
+});
+
+// ─── Set official champion (admin) ───
+app.post('/api/official-champion', async (req, res) => {
+  const { championId } = req.body;
+
+  try {
+    const { error } = await supabase
+      .from('app_config')
+      .upsert({ key: 'official_champion', value: championId || '' }, { onConflict: 'key' });
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Save official champion error:', err);
+    res.status(500).json({ error: 'Error al guardar campeón oficial.' });
+  }
+});
+
+// ─── Sync Excel → Supabase ───
 app.post('/api/sync-participants', async (req, res) => {
   try {
     const wb = XLSX.readFile(EXCEL_PATH);
@@ -95,26 +255,6 @@ app.post('/api/sync-participants', async (req, res) => {
     console.error('Sync error:', err);
     res.status(500).json({ success: false, error: 'Error al sincronizar: ' + err.message });
   }
-});
-
-// ─── Existing routes ───
-app.post('/api/forecasts', async (req, res) => {
-  const { user_id, match_id, prediction } = req.body;
-  const { data, error } = await supabase.from('forecasts').insert({
-    user_id,
-    match_id,
-    prediction,
-    points: 0,
-  });
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(data);
-});
-
-app.get('/api/users/:id', async (req, res) => {
-  const { id } = req.params;
-  const { data, error } = await supabase.from('users').select('*').eq('id', id).single();
-  if (error) return res.status(404).json({ error: error.message });
-  res.json(data);
 });
 
 app.get('/api/health', (req, res) => res.send('OK'));

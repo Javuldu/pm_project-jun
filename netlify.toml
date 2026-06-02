@@ -1,6 +1,6 @@
 [build]
   command = "cp 'BD participantes.xlsx' netlify/functions/ && npm run build"
-  # Copy Excel so both functions can read it
+  # Copy Excel so functions can read it
   publish = "dist"
 
 [functions]
@@ -14,6 +14,11 @@
 [[redirects]]
   from = "/api/sync-participants"
   to = "/.netlify/functions/sync-participants"
+  status = 200
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api"
   status = 200
 
 [context.production.environment]

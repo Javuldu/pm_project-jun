@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TopBar, BottomNav } from './components/Layout';
 import { ViewState, Match, Prediction, User } from './types';
-import { INITIAL_MATCHES, INITIAL_USERS } from './data';
+import { TEAMS, INITIAL_MATCHES } from './data';
 
 import { WelcomeView } from './views/Welcome';
 import { PredictionsView } from './views/PredictionsView';
@@ -9,24 +9,96 @@ import { RankingView } from './views/RankingView';
 import { AdminPanelView } from './views/AdminPanel';
 import { ProfileView } from './views/Profile';
 
+const API_URL = import.meta.env.VITE_API_URL || '';
+
+function api(path: string) {
+  return API_URL ? `${API_URL}${path}` : path;
+}
+
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewState>('welcome');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const [matches, setMatches] = useState<Match[]>(INITIAL_MATCHES);
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [allUserPredictions, setAllUserPredictions] = useState<Record<string, Prediction[]>>({});
   const [officialChampion, setOfficialChampion] = useState<string>('');
   const [userAuthError, setUserAuthError] = useState('');
   const [adminAuthError, setAdminAuthError] = useState('');
   const [popupMessage, setPopupMessage] = useState<string | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // Load common data + user-specific predictions from Supabase
+  const loadData = useCallback(async (userId?: string) => {
+    try {
+      const uid = userId || currentUserId;
+      if (!uid) return;
+
+      const res = await fetch(api(`/api/data/${uid}`));
+      const data = await res.json();
+
+      if (data.error) return;
+
+      if (data.matches) {
+        const mappedMatches = data.matches.map(m => ({
+          id: m.id,
+          teamA: TEAMS[m.teamA] || { id: m.teamA, name: m.teamA, code: m.teamA.toUpperCase() },
+          teamB: TEAMS[m.teamB] || { id: m.teamB, name: m.teamB, code: m.teamB.toUpperCase() },
+          date: m.date,
+          stage: m.stage,
+          isFinished: m.isFinished,
+          realScoreA: m.realScoreA,
+          realScoreB: m.realScoreB,
+          isLocked: m.isLocked,
+        }));
+        setMatches(mappedMatches);
+      }
+
+      if (data.userPredictions && uid) {
+        setAllUserPredictions(prev => ({ ...prev, [uid]: data.userPredictions }));
+      }
+
+      if (data.championPredictions) {
+        setUsers(prev => prev.map(u => ({
+          ...u,
+          championPrediction: data.championPredictions[u.id] || u.championPrediction,
+        })));
+      }
+
+      if (data.officialChampion !== undefined) {
+        setOfficialChampion(data.officialChampion);
+      }
+    } catch {
+      // Silently fail, use local state
+    }
+  }, [currentUserId]);
+
+  // Load initial matches if empty
+  useEffect(() => {
+    if (matches.length === 0) {
+      setMatches(INITIAL_MATCHES);
+    }
+    setInitialLoading(false);
+  }, []);
+
+  // Load data when user changes
+  useEffect(() => {
+    if (currentUserId) {
+      loadData(currentUserId);
+    }
+  }, [currentUserId]);
 
   const calculatedUsers = React.useMemo(() => {
-    return users.map(user => {
+    const allIds = new Set<string>();
+    users.forEach(u => allIds.add(u.id));
+    Object.keys(allUserPredictions).forEach(id => allIds.add(id));
+
+    return Array.from(allIds).map(id => {
+      const existingUser = users.find(u => u.id === id);
       let points = 0;
 
-      const uPreds = allUserPredictions[user.id] || [];
+      const uPreds = allUserPredictions[id] || [];
       matches.forEach(match => {
         if (match.isFinished && match.realScoreA !== undefined && match.realScoreB !== undefined) {
           const pred = uPreds.find(p => p.matchId === match.id);
@@ -37,37 +109,41 @@ export default function App() {
             const predB = pred.scoreB;
 
             if (realA === predA && realB === predB) {
-              points += 3; // Exact match
+              points += 3;
             } else if (
               (realA > realB && predA > predB) ||
               (realA < realB && predA < predB) ||
               (realA === realB && predA === predB)
             ) {
-              points += 1; // Correct outcome
+              points += 1;
             }
           }
         }
       });
 
-      if (officialChampion && user.championPrediction === officialChampion) {
+      const champPred = existingUser?.championPrediction;
+      if (officialChampion && champPred === officialChampion) {
         points += 5;
       }
 
-      return { ...user, points };
+      return {
+        id,
+        name: existingUser?.name || id,
+        championPrediction: champPred,
+        points,
+      };
     });
   }, [users, allUserPredictions, matches, officialChampion]);
 
   const currentUser = calculatedUsers.find(u => u.id === currentUserId);
 
-  // Auth Logic
+  // Auth
   const handleLoginUser = async (name: string, code: string) => {
     setIsAdmin(false);
     setUserAuthError('');
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || '';
-      const url = API_URL ? `${API_URL}/api/auth/participant` : '/api/auth/participant';
-      const res = await fetch(url, {
+      const res = await fetch(api('/api/auth/participant'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, code }),
@@ -79,17 +155,52 @@ export default function App() {
         return;
       }
 
+      const uid = data.user.id;
       let u = users.find(x => x.name.toLowerCase() === name.toLowerCase());
       if (!u) {
-        u = { id: data.user.id, name: data.user.name, points: 0 };
-        setUsers([...users, u]);
+        u = { id: uid, name: data.user.name, points: 0 };
+        setUsers(prev => [...prev, u!]);
       }
-      setCurrentUserId(u.id);
+      setCurrentUserId(uid);
       setCurrentView('predictions');
     } catch {
       setUserAuthError('Error de conexión con el servidor.');
     }
   };
+
+  const loadCommonData = useCallback(async () => {
+    try {
+      const res = await fetch(api('/api/data/_common_'));
+      const data = await res.json();
+      if (data.error) return;
+
+      if (data.matches) {
+        const mappedMatches = data.matches.map(m => ({
+          id: m.id,
+          teamA: TEAMS[m.teamA] || { id: m.teamA, name: m.teamA, code: m.teamA.toUpperCase() },
+          teamB: TEAMS[m.teamB] || { id: m.teamB, name: m.teamB, code: m.teamB.toUpperCase() },
+          date: m.date,
+          stage: m.stage,
+          isFinished: m.isFinished,
+          realScoreA: m.realScoreA,
+          realScoreB: m.realScoreB,
+          isLocked: m.isLocked,
+        }));
+        setMatches(mappedMatches);
+      }
+
+      if (data.championPredictions) {
+        setUsers(prev => prev.map(u => ({
+          ...u,
+          championPrediction: data.championPredictions[u.id] || u.championPrediction,
+        })));
+      }
+
+      if (data.officialChampion !== undefined) {
+        setOfficialChampion(data.officialChampion);
+      }
+    } catch {}
+  }, []);
 
   const handleLoginAdmin = (password: string) => {
     if (password === 'admin28123') {
@@ -97,6 +208,7 @@ export default function App() {
       setIsAdmin(true);
       setCurrentUserId(null);
       setCurrentView('adminPanel');
+      loadCommonData();
     } else {
       setAdminAuthError('Contraseña incorrecta.');
     }
@@ -116,19 +228,39 @@ export default function App() {
     }
   };
 
-  // Actions
-  const handleSavePredictions = (predictions: Prediction[]) => {
-    if (currentUser) {
-      setAllUserPredictions(prev => ({ ...prev, [currentUser.id]: predictions }));
-    }
+  // ─── Actions (persist to Supabase) ───
+
+  const handleSavePredictions = async (predictions: Prediction[]) => {
+    if (!currentUser) return;
+
+    setAllUserPredictions(prev => ({ ...prev, [currentUser.id]: predictions }));
+
+    try {
+      await fetch(api('/api/predictions'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, predictions }),
+      });
+    } catch {}
+
     setPopupMessage('¡Pronósticos de los partidos guardados correctamente!');
   };
 
-  const handleSaveChampion = (championId: string) => {
+  const handleSaveChampion = async (championId: string) => {
     if (!currentUser) return;
+
     setUsers(prev => prev.map(u =>
       u.id === currentUser.id ? { ...u, championPrediction: championId } : u
     ));
+
+    try {
+      await fetch(api('/api/champion'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, championTeamId: championId }),
+      });
+    } catch {}
+
     setPopupMessage('¡Selección de Campeón guardada correctamente!');
   };
 
@@ -140,14 +272,53 @@ export default function App() {
     setPopupMessage('Avatar actualizado correctamente');
   };
 
-  const handleAdminUpdateResults = (updatedMatches: Match[]) => {
+  const handleAdminUpdateResults = async (updatedMatches: Match[]) => {
     setMatches(updatedMatches);
+
+    try {
+      await fetch(api('/api/matches'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matches: updatedMatches }),
+      });
+    } catch {}
   };
 
-  const handleAdminAddMatch = (newMatch: Omit<Match, 'id'>) => {
+  const handleAdminAddMatch = async (newMatch: Omit<Match, 'id'>) => {
     const matchWithId: Match = { ...newMatch, id: `m${Date.now()}` };
-    setMatches(prev => [...prev, matchWithId]);
+    const updated = [...matches, matchWithId];
+    setMatches(updated);
+
+    try {
+      await fetch(api('/api/matches'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matches: updated }),
+      });
+    } catch {}
   };
+
+  const handleSetOfficialChampion = async (id: string) => {
+    setOfficialChampion(id);
+
+    try {
+      await fetch(api('/api/official-champion'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ championId: id }),
+      });
+    } catch {}
+
+    setPopupMessage('¡Campeón oficial actualizado!');
+  };
+
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <p className="text-lg font-bold text-slate-500">Cargando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-surface relative font-inter">
@@ -197,10 +368,7 @@ export default function App() {
             onUpdateResults={handleAdminUpdateResults}
             onAddMatch={handleAdminAddMatch}
             officialChampion={officialChampion}
-            onSetOfficialChampion={(id) => {
-              setOfficialChampion(id);
-              setPopupMessage('¡Campeón oficial actualizado!');
-            }}
+            onSetOfficialChampion={handleSetOfficialChampion}
             onShowPopup={(msg) => setPopupMessage(msg)}
           />
         )}
@@ -210,7 +378,6 @@ export default function App() {
         <BottomNav currentView={currentView} onChangeView={handleChangeView} isAdmin={isAdmin} />
       )}
 
-      {/* Confirmation Popup */}
       {popupMessage && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4 p-safe animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm flex flex-col items-center zoom-in-95 duration-200">
