@@ -122,16 +122,15 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
 
   const handleExportData = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
-    // Header
-    csvContent += "Participante,Partido,Prediccion_Local,Prediccion_Visitante\r\n";
+    csvContent += "\"Partido\",\"Participante\",\"Prediccion_Local\",\"Prediccion_Visitante\"\r\n";
     
-    users.forEach(user => {
-      const preds = allUserPredictions[user.id] || [];
-      localMatches.forEach(match => {
+    localMatches.forEach(match => {
+      users.forEach(user => {
+        const preds = allUserPredictions[user.id] || [];
         const p = preds.find(x => x.matchId === match.id);
         const pA = p?.scoreA !== undefined ? p.scoreA : '';
         const pB = p?.scoreB !== undefined ? p.scoreB : '';
-        csvContent += `${user.name},${match.teamA.code} vs ${match.teamB.code},${pA},${pB}\r\n`;
+        csvContent += `"${match.teamA.code} vs ${match.teamB.code}","${user.name}",${pA},${pB}\r\n`;
       });
     });
 
