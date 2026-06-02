@@ -1,0 +1,35 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# node-modules
+node_modules/
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# vue-cli build images
+dist/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Vite build directory
+dist/
+
+# Agents directory (from Antigravity / agent tools)
+.agents/

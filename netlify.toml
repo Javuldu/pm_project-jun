@@ -1,0 +1,15 @@
+[build]
+  command = "cp 'BD participantes.xlsx' netlify/functions/ && npm run build"
+  publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/auth/participant"
+  to = "/.netlify/functions/auth-participant"
+  status = 200
+
+[context.production.environment]
+  VITE_SUPABASE_URL = "https://db.oankzkkpmsknbflwbdzf.supabase.co"
+  VITE_SUPABASE_ANON_KEY = "YOUR_ANON_KEY"

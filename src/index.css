@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #001e40; /* primary */
+  --color-primary-container: #003366;
+  --color-on-primary-container: #799dd6;
+  --color-surface: #f8f9ff;
+  --color-surface-dim: #e5eeff;
+  --color-inverse-surface: #213145;
+  --color-secondary: #bc000a; /* action button */
+  --color-on-surface: #0b1c30;
+  
+  --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface font-inter antialiased min-h-screen text-base;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+}
