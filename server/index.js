@@ -166,7 +166,7 @@ app.get('/api/all-data', async (req, res) => {
   }
 });
 
-// ─── Save predictions ───
+// ─── Save predictions (first save locks them) ───
 app.post('/api/predictions', async (req, res) => {
   const { userId, predictions } = req.body;
   if (!userId || !predictions) {
@@ -174,36 +174,34 @@ app.post('/api/predictions', async (req, res) => {
   }
 
   try {
-    const { error: delError } = await supabase
-      .from('prediction_data')
-      .delete()
-      .eq('user_id', userId);
-
-    if (delError) throw delError;
-
-    if (predictions.length > 0) {
-      const rows = predictions.map(p => ({
+    const rows = predictions
+      .filter(p => p.matchId && p.scoreA !== undefined && p.scoreA !== '' && p.scoreB !== undefined && p.scoreB !== '')
+      .map(p => ({
         user_id: userId,
         match_id: p.matchId,
         score_a: p.scoreA ?? null,
         score_b: p.scoreB ?? null,
       }));
 
-      const { error: insError } = await supabase
-        .from('prediction_data')
-        .insert(rows);
+    const { data, error } = await supabase
+      .from('prediction_data')
+      .insert(rows, { onConflict: 'user_id,match_id', ignoreDuplicates: true })
+      .select('match_id');
 
-      if (insError) throw insError;
-    }
+    if (error) throw error;
 
-    res.json({ success: true });
+    const savedIds = (data || []).map(d => d.match_id);
+    const attemptedIds = rows.map(r => r.match_id);
+    const lockedIds = attemptedIds.filter(id => !savedIds.includes(id));
+
+    res.json({ success: true, saved: savedIds, locked: lockedIds });
   } catch (err) {
     console.error('Save predictions error:', err);
     res.status(500).json({ error: 'Error al guardar pronósticos.' });
   }
 });
 
-// ─── Save champion prediction ───
+// ─── Save champion prediction (first save locks it) ───
 app.post('/api/champion', async (req, res) => {
   const { userId, championTeamId } = req.body;
   if (!userId || !championTeamId) {
@@ -211,12 +209,22 @@ app.post('/api/champion', async (req, res) => {
   }
 
   try {
+    const { data: existing } = await supabase
+      .from('champion_data')
+      .select('user_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (existing) {
+      return res.json({ success: true, locked: true });
+    }
+
     const { error } = await supabase
       .from('champion_data')
-      .upsert({ user_id: userId, champion_team_id: championTeamId }, { onConflict: 'user_id' });
+      .insert({ user_id: userId, champion_team_id: championTeamId });
 
     if (error) throw error;
-    res.json({ success: true });
+    res.json({ success: true, locked: false });
   } catch (err) {
     console.error('Save champion error:', err);
     res.status(500).json({ error: 'Error al guardar campeón.' });

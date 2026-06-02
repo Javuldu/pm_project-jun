@@ -121,36 +121,52 @@ export const handler = async (event) => {
         return { statusCode: 400, body: JSON.stringify({ error: 'userId y predictions requeridos.' }) };
       }
 
-      const { error: delError } = await supabase.from('prediction_data').delete().eq('user_id', userId);
-      if (delError) throw delError;
-
-      if (predictions.length > 0) {
-        const rows = predictions.map(p => ({
+      const rows = predictions
+        .filter(p => p.matchId && p.scoreA !== undefined && p.scoreA !== '' && p.scoreB !== undefined && p.scoreB !== '')
+        .map(p => ({
           user_id: userId,
           match_id: p.matchId,
           score_a: p.scoreA ?? null,
           score_b: p.scoreB ?? null,
         }));
-        const { error: insError } = await supabase.from('prediction_data').insert(rows);
-        if (insError) throw insError;
-      }
 
-      return { statusCode: 200, body: JSON.stringify({ success: true }) };
+      const { data, error } = await supabase
+        .from('prediction_data')
+        .insert(rows, { onConflict: 'user_id,match_id', ignoreDuplicates: true })
+        .select('match_id');
+
+      if (error) throw error;
+
+      const savedIds = (data || []).map(d => d.match_id);
+      const attemptedIds = rows.map(r => r.match_id);
+      const lockedIds = attemptedIds.filter(id => !savedIds.includes(id));
+
+      return { statusCode: 200, body: JSON.stringify({ success: true, saved: savedIds, locked: lockedIds }) };
     }
 
-    // POST /api/champion
+    // POST /api/champion (first save locks it)
     if (path === 'champion' && method === 'POST') {
       const { userId, championTeamId } = body;
       if (!userId || !championTeamId) {
         return { statusCode: 400, body: JSON.stringify({ error: 'userId y championTeamId requeridos.' }) };
       }
 
-      const { error } = await supabase.from('champion_data').upsert(
-        { user_id: userId, champion_team_id: championTeamId },
-        { onConflict: 'user_id' }
-      );
+      const { data: existing } = await supabase
+        .from('champion_data')
+        .select('user_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (existing) {
+        return { statusCode: 200, body: JSON.stringify({ success: true, locked: true }) };
+      }
+
+      const { error } = await supabase
+        .from('champion_data')
+        .insert({ user_id: userId, champion_team_id: championTeamId });
+
       if (error) throw error;
-      return { statusCode: 200, body: JSON.stringify({ success: true }) };
+      return { statusCode: 200, body: JSON.stringify({ success: true, locked: false }) };
     }
 
     // POST /api/matches

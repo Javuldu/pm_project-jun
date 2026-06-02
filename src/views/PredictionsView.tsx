@@ -10,9 +10,10 @@ interface PredictionsViewProps {
   onSavePredictions: (predictions: Prediction[]) => void;
   onSaveChampion: (championId: string) => void;
   championPrediction?: string;
+  confirmedMatchIds?: string[];
 }
 
-export function PredictionsView({ matches, userPredictions, allUserPredictions, users, onSavePredictions, onSaveChampion, championPrediction }: PredictionsViewProps) {
+export function PredictionsView({ matches, userPredictions, allUserPredictions, users, onSavePredictions, onSaveChampion, championPrediction, confirmedMatchIds = [] }: PredictionsViewProps) {
   const [localPredictions, setLocalPredictions] = useState<Prediction[]>(userPredictions);
   const [champion, setChampion] = useState<string>(championPrediction || '');
 
@@ -134,11 +135,12 @@ export function PredictionsView({ matches, userPredictions, allUserPredictions, 
                     const isDraw = pred.scoreA !== undefined && pred.scoreB !== undefined && pred.scoreA === pred.scoreB && pred.scoreA !== '';
                     const needsPenalties = match.stage !== 'Grupos' && isDraw;
                     const locked = match.isLocked;
+                    const isConfirmed = confirmedMatchIds.includes(match.id);
 
                     return (
-                      <div key={match.id} className={`bg-white rounded-xl shadow-sm border border-slate-100 p-5 relative overflow-hidden ${locked ? 'bg-slate-50 border-slate-200 opacity-80' : ''}`}>
-                      <span className={`absolute top-0 right-0 text-[10px] font-bold px-3 py-1 rounded-bl-lg ${locked ? 'bg-red-100 text-red-600' : 'bg-surface-dim text-primary'}`}>
-                        {locked ? 'BLOQUEADO' : `${dateString} - ${timeString}`}
+                      <div key={match.id} className={`bg-white rounded-xl shadow-sm border border-slate-100 p-5 relative overflow-hidden ${locked || isConfirmed ? 'bg-slate-50 border-slate-200 opacity-80' : ''}`}>
+                      <span className={`absolute top-0 right-0 text-[10px] font-bold px-3 py-1 rounded-bl-lg ${locked ? 'bg-red-100 text-red-600' : isConfirmed ? 'bg-green-100 text-green-700' : 'bg-surface-dim text-primary'}`}>
+                        {locked ? 'BLOQUEADO' : isConfirmed ? 'CONFIRMADO' : `${dateString} - ${timeString}`}
                       </span>
                       {match.stage !== 'Grupos' && (
                         <span className="absolute top-0 left-0 bg-green-200 text-green-800 text-[10px] font-bold px-3 py-1 rounded-br-lg">
@@ -154,19 +156,19 @@ export function PredictionsView({ matches, userPredictions, allUserPredictions, 
                           <span className="font-semibold text-xs text-center leading-tight">{match.teamA.name}</span>
                         </div>
 
-                        <div className={`flex items-center gap-2 px-3 shadow-sm py-2 rounded-lg ${locked ? 'bg-slate-100' : 'bg-surface'}`}>
+                        <div className={`flex items-center gap-2 px-3 shadow-sm py-2 rounded-lg ${locked || isConfirmed ? 'bg-slate-100' : 'bg-surface'}`}>
                           <input 
                             type="number" min="0" value={pred.scoreA ?? ''} 
                             onChange={(e) => handleScoreChange(match.id, 'A', e.target.value)}
-                            disabled={locked}
-                            className={`w-12 h-12 text-center text-xl font-bold border border-slate-300 rounded focus:border-primary focus:ring-2 focus:ring-primary/40 outline-none transition-all ${locked ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-white'}`} placeholder="-"
+                            disabled={locked || isConfirmed}
+                            className={`w-12 h-12 text-center text-xl font-bold border border-slate-300 rounded focus:border-primary focus:ring-2 focus:ring-primary/40 outline-none transition-all ${locked || isConfirmed ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-white'}`} placeholder="-"
                           />
                           <span className="text-slate-400 font-bold text-sm">vs</span>
                           <input 
                             type="number" min="0" value={pred.scoreB ?? ''} 
                             onChange={(e) => handleScoreChange(match.id, 'B', e.target.value)}
-                            disabled={locked}
-                            className={`w-12 h-12 text-center text-xl font-bold border border-slate-300 rounded focus:border-primary focus:ring-2 focus:ring-primary/40 outline-none transition-all ${locked ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-white'}`} placeholder="-"
+                            disabled={locked || isConfirmed}
+                            className={`w-12 h-12 text-center text-xl font-bold border border-slate-300 rounded focus:border-primary focus:ring-2 focus:ring-primary/40 outline-none transition-all ${locked || isConfirmed ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-white'}`} placeholder="-"
                           />
                         </div>
 
@@ -179,13 +181,13 @@ export function PredictionsView({ matches, userPredictions, allUserPredictions, 
                       </div>
 
                       {needsPenalties && (
-                        <div className={`mt-5 p-3 rounded-lg flex items-center justify-between border ${locked ? 'bg-slate-100 border-slate-200' : 'bg-surface border-slate-100'}`}>
+                        <div className={`mt-5 p-3 rounded-lg flex items-center justify-between border ${locked || isConfirmed ? 'bg-slate-100 border-slate-200' : 'bg-surface border-slate-100'}`}>
                           <span className="text-xs font-bold text-slate-600 uppercase">¿Quién clasifica? (Penales)</span>
                           <select 
                             value={pred.penaltiesWinner || ''}
                             onChange={(e) => handlePenaltiesChange(match.id, e.target.value)}
-                            disabled={locked}
-                            className={`border border-slate-200 rounded p-1.5 text-sm font-bold text-primary ${locked ? 'bg-slate-200 text-slate-500' : 'bg-white'}`}
+                            disabled={locked || isConfirmed}
+                            className={`border border-slate-200 rounded p-1.5 text-sm font-bold text-primary ${locked || isConfirmed ? 'bg-slate-200 text-slate-500' : 'bg-white'}`}
                           >
                             <option value="">Elegir ganador...</option>
                             <option value={match.teamA.id}>{match.teamA.name}</option>

@@ -29,6 +29,7 @@ export default function App() {
   const [popupMessage, setPopupMessage] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [allParticipants, setAllParticipants] = useState<{id: string; name: string}[]>([]);
+  const [confirmedMatchIds, setConfirmedMatchIds] = useState<string[]>([]);
 
   // Load common data + user-specific predictions from Supabase
   const loadData = useCallback(async (userId?: string) => {
@@ -58,6 +59,7 @@ export default function App() {
 
       if (data.userPredictions && uid) {
         setAllUserPredictions(prev => ({ ...prev, [uid]: data.userPredictions }));
+        setConfirmedMatchIds(data.userPredictions.map(p => p.matchId));
       }
 
       if (data.championPredictions) {
@@ -171,7 +173,7 @@ export default function App() {
     }
   };
 
-  const loadAllData = useCallback(async () => {
+  const loadAllData = useCallback(async (forUserId?: string) => {
     try {
       const res = await fetch(api('/api/all-data'));
       const data = await res.json();
@@ -198,6 +200,10 @@ export default function App() {
 
       if (data.allPredictions) {
         setAllUserPredictions(data.allPredictions);
+        const uid = forUserId;
+        if (uid && data.allPredictions[uid]) {
+          setConfirmedMatchIds(data.allPredictions[uid].map(p => p.matchId));
+        }
       }
 
       if (data.championPredictions) {
@@ -216,6 +222,10 @@ export default function App() {
   const loadCommonData = useCallback(async () => {
     await loadAllData();
   }, [loadAllData]);
+
+  const loadRankingData = useCallback(async () => {
+    await loadAllData(currentUserId || undefined);
+  }, [loadAllData, currentUserId]);
 
   const handleLoginAdmin = (password: string) => {
     if (password === 'admin28123') {
@@ -241,7 +251,7 @@ export default function App() {
     } else {
       setCurrentView(view);
       if (view === 'ranking') {
-        loadAllData();
+        loadRankingData();
       }
     }
   };
@@ -251,35 +261,55 @@ export default function App() {
   const handleSavePredictions = async (predictions: Prediction[]) => {
     if (!currentUser) return;
 
-    setAllUserPredictions(prev => ({ ...prev, [currentUser.id]: predictions }));
-
     try {
-      await fetch(api('/api/predictions'), {
+      const res = await fetch(api('/api/predictions'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.id, predictions }),
       });
-    } catch {}
+      const data = await res.json();
 
-    setPopupMessage('¡Pronósticos de los partidos guardados correctamente!');
+      if (data.success) {
+        if (data.saved && data.saved.length > 0) {
+          setConfirmedMatchIds(prev => [...new Set([...prev, ...data.saved])]);
+        }
+        const totalSaved = data.saved?.length || 0;
+        const totalLocked = data.locked?.length || 0;
+        let msg: string;
+        if (totalLocked > 0) {
+          msg = `Guardados: ${totalSaved} nuevos, ${totalLocked} ya estaban confirmados.`;
+        } else {
+          msg = '¡Pronósticos guardados correctamente!';
+        }
+        setPopupMessage(msg);
+      }
+    } catch {
+      setPopupMessage('Error de conexión al guardar.');
+    }
   };
 
   const handleSaveChampion = async (championId: string) => {
     if (!currentUser) return;
 
-    setUsers(prev => prev.map(u =>
-      u.id === currentUser.id ? { ...u, championPrediction: championId } : u
-    ));
-
     try {
-      await fetch(api('/api/champion'), {
+      const res = await fetch(api('/api/champion'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.id, championTeamId: championId }),
       });
-    } catch {}
+      const data = await res.json();
 
-    setPopupMessage('¡Selección de Campeón guardada correctamente!');
+      if (data.success) {
+        setUsers(prev => prev.map(u =>
+          u.id === currentUser.id ? { ...u, championPrediction: championId } : u
+        ));
+        setPopupMessage(data.locked
+          ? 'El campeón ya estaba confirmado anteriormente.'
+          : '¡Selección de Campeón guardada correctamente!');
+      }
+    } catch {
+      setPopupMessage('Error de conexión al guardar campeón.');
+    }
   };
 
   const handleUpdateAvatar = (url: string) => {
@@ -363,6 +393,7 @@ export default function App() {
             championPrediction={currentUser.championPrediction}
             onSavePredictions={handleSavePredictions}
             onSaveChampion={handleSaveChampion}
+            confirmedMatchIds={confirmedMatchIds}
           />
         )}
 
