@@ -9,12 +9,13 @@ interface AdminPanelProps {
   allUserPredictions: Record<string, Prediction[]>;
   onUpdateResults: (matches: Match[]) => void;
   onAddMatch: (match: Omit<Match, 'id'>) => void;
+  onDeleteMatch?: (matchId: string) => void;
   officialChampion: string;
   onSetOfficialChampion: (id: string) => void;
   onShowPopup: (msg: string) => void;
 }
 
-export function AdminPanelView({ matches, users, allUserPredictions, onUpdateResults, onAddMatch, officialChampion, onSetOfficialChampion, onShowPopup }: AdminPanelProps) {
+export function AdminPanelView({ matches, users, allUserPredictions, onUpdateResults, onAddMatch, onDeleteMatch, officialChampion, onSetOfficialChampion, onShowPopup }: AdminPanelProps) {
   const [localMatches, setLocalMatches] = useState<Match[]>(matches);
   const [showAddForm, setShowAddForm] = useState(false);
   
@@ -251,6 +252,18 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
                       />
                       <span className="text-[10px] font-bold text-slate-600">Marcado Final</span>
                     </label>
+                    {onDeleteMatch && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`¿Eliminar ${match.teamA.code} vs ${match.teamB.code}?`)) {
+                            onDeleteMatch(match.id);
+                          }
+                        }}
+                        className="bg-red-50 text-red-600 border border-red-200 text-[10px] font-bold px-2 py-1 rounded hover:bg-red-100"
+                      >
+                        Eliminar
+                      </button>
+                    )}
                   </div>
                 </div>
                 

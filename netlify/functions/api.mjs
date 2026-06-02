@@ -194,6 +194,19 @@ export const handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify({ success: true }) };
     }
 
+    // DELETE /api/matches/:matchId
+    if (path.startsWith('matches/') && method === 'DELETE') {
+      const matchId = getId(path);
+
+      const { error: delPreds } = await supabase.from('prediction_data').delete().eq('match_id', matchId);
+      if (delPreds) throw delPreds;
+
+      const { error: delMatch } = await supabase.from('match_data').delete().eq('id', matchId);
+      if (delMatch) throw delMatch;
+
+      return { statusCode: 200, body: JSON.stringify({ success: true }) };
+    }
+
     // POST /api/official-champion
     if (path === 'official-champion' && method === 'POST') {
       const { championId } = body;

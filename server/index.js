@@ -264,6 +264,32 @@ app.post('/api/matches', async (req, res) => {
   }
 });
 
+// ─── Delete match (admin) ───
+app.delete('/api/matches/:matchId', async (req, res) => {
+  const { matchId } = req.params;
+
+  try {
+    const { error: delPreds } = await supabase
+      .from('prediction_data')
+      .delete()
+      .eq('match_id', matchId);
+
+    if (delPreds) throw delPreds;
+
+    const { error: delMatch } = await supabase
+      .from('match_data')
+      .delete()
+      .eq('id', matchId);
+
+    if (delMatch) throw delMatch;
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Delete match error:', err);
+    res.status(500).json({ error: 'Error al borrar partido.' });
+  }
+});
+
 // ─── Set official champion (admin) ───
 app.post('/api/official-champion', async (req, res) => {
   const { championId } = req.body;

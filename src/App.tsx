@@ -346,6 +346,20 @@ export default function App() {
     } catch {}
   };
 
+  const handleAdminDeleteMatch = async (matchId: string) => {
+    try {
+      const res = await fetch(api(`/api/matches/${matchId}`), { method: 'DELETE' });
+      const data = await res.json();
+
+      if (data.success) {
+        setMatches(prev => prev.filter(m => m.id !== matchId));
+        setPopupMessage('Partido eliminado correctamente.');
+      }
+    } catch {
+      setPopupMessage('Error al eliminar el partido.');
+    }
+  };
+
   const handleSetOfficialChampion = async (id: string) => {
     setOfficialChampion(id);
 
@@ -416,6 +430,7 @@ export default function App() {
             allUserPredictions={allUserPredictions}
             onUpdateResults={handleAdminUpdateResults}
             onAddMatch={handleAdminAddMatch}
+            onDeleteMatch={handleAdminDeleteMatch}
             officialChampion={officialChampion}
             onSetOfficialChampion={handleSetOfficialChampion}
             onShowPopup={(msg) => setPopupMessage(msg)}
