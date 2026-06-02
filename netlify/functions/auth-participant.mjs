@@ -1,9 +1,9 @@
-import XLSX from 'xlsx';
-import { fileURLToPath } from 'url';
-import path from 'path';
+import { createClient } from '@supabase/supabase-js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -23,41 +23,30 @@ export const handler = async (event) => {
       };
     }
 
-    const excelPath = path.resolve(__dirname, 'BD participantes.xlsx');
-    const wb = XLSX.readFile(excelPath);
-    const sheet = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    const { data, error } = await supabase
+      .from('participants')
+      .select('id, name')
+      .eq('code', code.trim())
+      .maybeSingle();
 
-    let match = null;
-    for (let i = 1; i < rows.length; i++) {
-      const [id, rowName, rowCode] = rows[i];
-      if (
-        rowName &&
-        rowCode &&
-        String(rowName).trim().toLowerCase() === name.trim().toLowerCase() &&
-        String(rowCode).trim() === code.trim()
-      ) {
-        match = { id: Number(id), name: String(rowName).trim() };
-        break;
-      }
-    }
+    if (error) throw error;
 
-    if (match) {
+    if (!data || data.name.toLowerCase() !== name.trim().toLowerCase()) {
       return {
         statusCode: 200,
-        body: JSON.stringify({ valid: true, user: { id: `u${match.id}`, name: match.name } }),
+        body: JSON.stringify({
+          valid: false,
+          error: 'Nombre o código incorrecto. No estás registrado como participante.',
+        }),
       };
     }
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        valid: false,
-        error: 'Nombre o código incorrecto. No estás registrado como participante.',
-      }),
+      body: JSON.stringify({ valid: true, user: { id: `u${data.id}`, name: data.name } }),
     };
   } catch (err) {
-    console.error('Error in auth function:', err);
+    console.error('Auth function error:', err);
     return {
       statusCode: 500,
       body: JSON.stringify({ valid: false, error: 'Error interno del servidor.' }),

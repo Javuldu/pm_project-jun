@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Match, Stage, Team, User, Prediction } from '../types';
 import { TEAMS } from '../data';
+import { RefreshCw } from 'lucide-react';
 
 interface AdminPanelProps {
   matches: Match[];
@@ -71,6 +72,29 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
     setLocalMatches(matches);
   }, [matches]);
 
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
+  const handleSyncParticipants = async () => {
+    setSyncing(true);
+    setSyncMessage(null);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const url = API_URL ? `${API_URL}/api/sync-participants` : '/api/sync-participants';
+      const res = await fetch(url, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setSyncMessage(`✅ ${data.message}`);
+      } else {
+        setSyncMessage(`❌ ${data.error || 'Error al sincronizar'}`);
+      }
+    } catch {
+      setSyncMessage('❌ Error de conexión con el servidor.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const handleExportData = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
     // Header
@@ -109,6 +133,14 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
           >
             Exportar CSV
           </button>
+          <button
+            onClick={handleSyncParticipants}
+            disabled={syncing}
+            className="bg-white border border-slate-200 text-slate-700 font-bold py-2 px-4 rounded-lg shadow-sm hover:bg-slate-50 transition text-sm disabled:opacity-50 flex items-center gap-1"
+          >
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Sincronizando...' : 'Sync Excel'}
+          </button>
           <button 
             onClick={handleSaveAll}
             className="bg-secondary text-white font-bold py-2 px-6 rounded-lg shadow-sm hover:bg-red-700 transition"
@@ -117,6 +149,12 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
           </button>
         </div>
       </div>
+
+      {syncMessage && (
+        <div className="bg-blue-50 p-3 rounded-xl border border-blue-200 text-sm font-bold text-blue-800 text-center">
+          {syncMessage}
+        </div>
+      )}
 
       <div className="bg-yellow-50 p-5 rounded-xl border border-yellow-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

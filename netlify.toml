@@ -1,5 +1,6 @@
 [build]
   command = "cp 'BD participantes.xlsx' netlify/functions/ && npm run build"
+  # Copy Excel so both functions can read it
   publish = "dist"
 
 [functions]
@@ -10,6 +11,12 @@
   to = "/.netlify/functions/auth-participant"
   status = 200
 
+[[redirects]]
+  from = "/api/sync-participants"
+  to = "/.netlify/functions/sync-participants"
+  status = 200
+
 [context.production.environment]
-  VITE_SUPABASE_URL = "https://db.oankzkkpmsknbflwbdzf.supabase.co"
-  VITE_SUPABASE_ANON_KEY = "YOUR_ANON_KEY"
+  VITE_SUPABASE_URL = "https://oankzkkpmsknbflwbdzf.supabase.co"
+  VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hbmt6a2twbXNrbmJmbHdiZHpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMDY5NzgsImV4cCI6MjA5NTc4Mjk3OH0.fNR4kzGcCO1zpC3QjPxqsRHt5ExdUiX_YQtMJfLZ6Xc"
+  SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hbmt6a2twbXNrbmJmbHdiZHpmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDIwNjk3OCwiZXhwIjoyMDk1NzgyOTc4fQ.PaDpcZ3s16vGmrr_UKSZqel43_8q7fV0DngV3PvWP6M"
