@@ -247,6 +247,24 @@ export const handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify({ success: true }) };
     }
 
+    // POST /api/reset
+    if (path === 'reset' && method === 'POST') {
+      await Promise.all([
+        supabase.from('prediction_data').delete().neq('match_id', '_'),
+        supabase.from('champion_data').delete().neq('user_id', '_'),
+        supabase.from('match_data').update({
+          is_finished: false,
+          real_score_a: null,
+          real_score_b: null,
+          is_locked: false,
+        }).neq('id', '_'),
+      ]);
+
+      await supabase.from('app_config').delete().eq('key', 'official_champion');
+
+      return { statusCode: 200, body: JSON.stringify({ success: true, message: 'Datos reiniciados correctamente.' }) };
+    }
+
     return { statusCode: 404, body: JSON.stringify({ error: 'Ruta no encontrada.' }) };
   } catch (err) {
     console.error('API function error:', err);

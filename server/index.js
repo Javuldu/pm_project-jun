@@ -390,6 +390,29 @@ app.post('/api/sync-participants', async (req, res) => {
   }
 });
 
+// ─── Reset all data ───
+app.post('/api/reset', async (req, res) => {
+  try {
+    await Promise.all([
+      supabase.from('prediction_data').delete().neq('match_id', '_'),
+      supabase.from('champion_data').delete().neq('user_id', '_'),
+      supabase.from('match_data').update({
+        is_finished: false,
+        real_score_a: null,
+        real_score_b: null,
+        is_locked: false,
+      }).neq('id', '_'),
+    ]);
+
+    await supabase.from('app_config').delete().eq('key', 'official_champion');
+
+    res.json({ success: true, message: 'Datos reiniciados correctamente.' });
+  } catch (err) {
+    console.error('Reset error:', err);
+    res.status(500).json({ success: false, error: 'Error al reiniciar datos.' });
+  }
+});
+
 app.get('/api/health', (req, res) => res.send('OK'));
 
 const PORT = process.env.PORT || 4000;

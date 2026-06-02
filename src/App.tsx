@@ -383,6 +383,25 @@ export default function App() {
     }
   };
 
+  const handleResetData = async () => {
+    try {
+      const res = await fetch(api('/api/reset'), { method: 'POST' });
+      const data = await res.json();
+
+      if (data.success) {
+        setMatches(prev => prev.map(m => ({ ...m, realScoreA: undefined, realScoreB: undefined, isFinished: false, isLocked: false })));
+        setAllUserPredictions({});
+        setConfirmedMatchIds([]);
+        setUsers(prev => prev.map(u => ({ ...u, championPrediction: undefined })));
+        setOfficialChampion('');
+        setPopupMessage('Datos reiniciados correctamente.');
+        loadCommonData();
+      }
+    } catch {
+      setPopupMessage('Error al reiniciar datos.');
+    }
+  };
+
   const handleSetOfficialChampion = async (id: string) => {
     setOfficialChampion(id);
 
@@ -454,6 +473,7 @@ export default function App() {
             onUpdateResults={handleAdminUpdateResults}
             onAddMatch={handleAdminAddMatch}
             onDeleteMatch={handleAdminDeleteMatch}
+            onResetData={handleResetData}
             officialChampion={officialChampion}
             onSetOfficialChampion={handleSetOfficialChampion}
             onShowPopup={(msg) => setPopupMessage(msg)}

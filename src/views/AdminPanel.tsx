@@ -10,12 +10,13 @@ interface AdminPanelProps {
   onUpdateResults: (matches: Match[]) => void;
   onAddMatch: (match: Omit<Match, 'id'>) => void;
   onDeleteMatch?: (matchId: string) => void;
+  onResetData?: () => void;
   officialChampion: string;
   onSetOfficialChampion: (id: string) => void;
   onShowPopup: (msg: string) => void;
 }
 
-export function AdminPanelView({ matches, users, allUserPredictions, onUpdateResults, onAddMatch, onDeleteMatch, officialChampion, onSetOfficialChampion, onShowPopup }: AdminPanelProps) {
+export function AdminPanelView({ matches, users, allUserPredictions, onUpdateResults, onAddMatch, onDeleteMatch, onResetData, officialChampion, onSetOfficialChampion, onShowPopup }: AdminPanelProps) {
   const [localMatches, setLocalMatches] = useState<Match[]>(matches);
   const [showAddForm, setShowAddForm] = useState(false);
   
@@ -181,6 +182,18 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
           >
             Guardar Resultados
           </button>
+          {onResetData && (
+            <button
+              onClick={() => {
+                if (window.confirm('¿Reiniciar todos los datos? Se borrarán predicciones, resultados y campeón oficial.')) {
+                  onResetData();
+                }
+              }}
+              className="bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm hover:bg-red-800 transition text-sm"
+            >
+              Reiniciar Todo
+            </button>
+          )}
         </div>
       </div>
 
