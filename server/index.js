@@ -101,7 +101,14 @@ app.get('/api/data/:userId', async (req, res) => {
 
     const officialChampion = (configRes.data.find(c => c.key === 'official_champion') || {}).value || '';
 
-    res.json({ matches, userPredictions, championPredictions, officialChampion });
+    const avatarUrls = {};
+    configRes.data.forEach(c => {
+      if (c.key.startsWith('avatar_')) {
+        avatarUrls[c.key.replace('avatar_', '')] = c.value;
+      }
+    });
+
+    res.json({ matches, userPredictions, championPredictions, officialChampion, avatarUrls });
   } catch (err) {
     console.error('Load data error:', err);
     res.status(500).json({ error: 'Error al cargar datos.' });
@@ -159,7 +166,14 @@ app.get('/api/all-data', async (req, res) => {
 
     const officialChampion = (configRes.data.find(c => c.key === 'official_champion') || {}).value || '';
 
-    res.json({ matches, participants, allPredictions, championPredictions, officialChampion });
+    const avatarUrls = {};
+    configRes.data.forEach(c => {
+      if (c.key.startsWith('avatar_')) {
+        avatarUrls[c.key.replace('avatar_', '')] = c.value;
+      }
+    });
+
+    res.json({ matches, participants, allPredictions, championPredictions, officialChampion, avatarUrls });
   } catch (err) {
     console.error('Load all data error:', err);
     res.status(500).json({ error: 'Error al cargar datos.' });
@@ -304,6 +318,26 @@ app.post('/api/official-champion', async (req, res) => {
   } catch (err) {
     console.error('Save official champion error:', err);
     res.status(500).json({ error: 'Error al guardar campeón oficial.' });
+  }
+});
+
+// ─── Save avatar ───
+app.post('/api/avatar', async (req, res) => {
+  const { userId, avatarUrl } = req.body;
+  if (!userId) {
+    return res.status(400).json({ error: 'userId requerido.' });
+  }
+
+  try {
+    const { error } = await supabase
+      .from('app_config')
+      .upsert({ key: `avatar_${userId}`, value: avatarUrl || '' }, { onConflict: 'key' });
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Save avatar error:', err);
+    res.status(500).json({ error: 'Error al guardar avatar.' });
   }
 });
 

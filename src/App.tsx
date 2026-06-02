@@ -72,6 +72,13 @@ export default function App() {
       if (data.officialChampion !== undefined) {
         setOfficialChampion(data.officialChampion);
       }
+
+      if (data.avatarUrls) {
+        setUsers(prev => prev.map(u => ({
+          ...u,
+          avatarUrl: data.avatarUrls[u.id] || u.avatarUrl,
+        })));
+      }
     } catch {
       // Silently fail, use local state
     }
@@ -216,6 +223,13 @@ export default function App() {
       if (data.officialChampion !== undefined) {
         setOfficialChampion(data.officialChampion);
       }
+
+      if (data.avatarUrls) {
+        setUsers(prev => prev.map(u => ({
+          ...u,
+          avatarUrl: data.avatarUrls[u.id] || u.avatarUrl,
+        })));
+      }
     } catch {}
   }, []);
 
@@ -312,11 +326,20 @@ export default function App() {
     }
   };
 
-  const handleUpdateAvatar = (url: string) => {
+  const handleUpdateAvatar = async (url: string) => {
     if (!currentUser) return;
     setUsers(prev => prev.map(u =>
       u.id === currentUser.id ? { ...u, avatarUrl: url } : u
     ));
+
+    try {
+      await fetch(api('/api/avatar'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, avatarUrl: url }),
+      });
+    } catch {}
+
     setPopupMessage('Avatar actualizado correctamente');
   };
 

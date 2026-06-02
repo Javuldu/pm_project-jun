@@ -58,7 +58,14 @@ export const handler = async (event) => {
 
       const officialChampion = (configRes.data.find(c => c.key === 'official_champion') || {}).value || '';
 
-      return { statusCode: 200, body: JSON.stringify({ matches, userPredictions, championPredictions, officialChampion }) };
+      const avatarUrls = {};
+      configRes.data.forEach(c => {
+        if (c.key.startsWith('avatar_')) {
+          avatarUrls[c.key.replace('avatar_', '')] = c.value;
+        }
+      });
+
+      return { statusCode: 200, body: JSON.stringify({ matches, userPredictions, championPredictions, officialChampion, avatarUrls }) };
     }
 
     // GET /api/all-data
@@ -111,7 +118,14 @@ export const handler = async (event) => {
 
       const officialChampion = (configRes.data.find(c => c.key === 'official_champion') || {}).value || '';
 
-      return { statusCode: 200, body: JSON.stringify({ matches, participants, allPredictions, championPredictions, officialChampion }) };
+      const avatarUrls = {};
+      configRes.data.forEach(c => {
+        if (c.key.startsWith('avatar_')) {
+          avatarUrls[c.key.replace('avatar_', '')] = c.value;
+        }
+      });
+
+      return { statusCode: 200, body: JSON.stringify({ matches, participants, allPredictions, championPredictions, officialChampion, avatarUrls }) };
     }
 
     // POST /api/predictions
@@ -212,6 +226,21 @@ export const handler = async (event) => {
       const { championId } = body;
       const { error } = await supabase.from('app_config').upsert(
         { key: 'official_champion', value: championId || '' },
+        { onConflict: 'key' }
+      );
+      if (error) throw error;
+      return { statusCode: 200, body: JSON.stringify({ success: true }) };
+    }
+
+    // POST /api/avatar
+    if (path === 'avatar' && method === 'POST') {
+      const { userId, avatarUrl } = body;
+      if (!userId) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'userId requerido.' }) };
+      }
+
+      const { error } = await supabase.from('app_config').upsert(
+        { key: `avatar_${userId}`, value: avatarUrl || '' },
         { onConflict: 'key' }
       );
       if (error) throw error;
