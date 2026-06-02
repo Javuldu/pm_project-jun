@@ -28,6 +28,7 @@ export default function App() {
   const [adminAuthError, setAdminAuthError] = useState('');
   const [popupMessage, setPopupMessage] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [allParticipants, setAllParticipants] = useState<{id: string; name: string}[]>([]);
 
   // Load common data + user-specific predictions from Supabase
   const loadData = useCallback(async (userId?: string) => {
@@ -91,10 +92,12 @@ export default function App() {
 
   const calculatedUsers = React.useMemo(() => {
     const allIds = new Set<string>();
+    allParticipants.forEach(p => allIds.add(p.id));
     users.forEach(u => allIds.add(u.id));
     Object.keys(allUserPredictions).forEach(id => allIds.add(id));
 
     return Array.from(allIds).map(id => {
+      const participant = allParticipants.find(p => p.id === id);
       const existingUser = users.find(u => u.id === id);
       let points = 0;
 
@@ -128,12 +131,12 @@ export default function App() {
 
       return {
         id,
-        name: existingUser?.name || id,
+        name: participant?.name || existingUser?.name || id,
         championPrediction: champPred,
         points,
       };
     });
-  }, [users, allUserPredictions, matches, officialChampion]);
+  }, [allParticipants, users, allUserPredictions, matches, officialChampion]);
 
   const currentUser = calculatedUsers.find(u => u.id === currentUserId);
 
@@ -168,9 +171,9 @@ export default function App() {
     }
   };
 
-  const loadCommonData = useCallback(async () => {
+  const loadAllData = useCallback(async () => {
     try {
-      const res = await fetch(api('/api/data/_common_'));
+      const res = await fetch(api('/api/all-data'));
       const data = await res.json();
       if (data.error) return;
 
@@ -189,6 +192,14 @@ export default function App() {
         setMatches(mappedMatches);
       }
 
+      if (data.participants) {
+        setAllParticipants(data.participants);
+      }
+
+      if (data.allPredictions) {
+        setAllUserPredictions(data.allPredictions);
+      }
+
       if (data.championPredictions) {
         setUsers(prev => prev.map(u => ({
           ...u,
@@ -201,6 +212,10 @@ export default function App() {
       }
     } catch {}
   }, []);
+
+  const loadCommonData = useCallback(async () => {
+    await loadAllData();
+  }, [loadAllData]);
 
   const handleLoginAdmin = (password: string) => {
     if (password === 'admin28123') {
@@ -225,6 +240,9 @@ export default function App() {
       handleLogout();
     } else {
       setCurrentView(view);
+      if (view === 'ranking') {
+        loadAllData();
+      }
     }
   };
 

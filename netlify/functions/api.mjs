@@ -61,6 +61,59 @@ export const handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify({ matches, userPredictions, championPredictions, officialChampion }) };
     }
 
+    // GET /api/all-data
+    if (path === 'all-data' && method === 'GET') {
+      const [matchesRes, participantsRes, predictionsRes, championRes, configRes] = await Promise.all([
+        supabase.from('match_data').select('*').order('id'),
+        supabase.from('participants').select('id, name').order('id'),
+        supabase.from('prediction_data').select('*'),
+        supabase.from('champion_data').select('*'),
+        supabase.from('app_config').select('*'),
+      ]);
+
+      if (matchesRes.error) throw matchesRes.error;
+      if (participantsRes.error) throw participantsRes.error;
+      if (predictionsRes.error) throw predictionsRes.error;
+      if (championRes.error) throw championRes.error;
+      if (configRes.error) throw configRes.error;
+
+      const matches = matchesRes.data.map(m => ({
+        id: m.id,
+        teamA: m.team_a_id,
+        teamB: m.team_b_id,
+        date: m.date,
+        stage: m.stage,
+        isFinished: m.is_finished,
+        realScoreA: m.real_score_a,
+        realScoreB: m.real_score_b,
+        isLocked: m.is_locked,
+      }));
+
+      const participants = participantsRes.data.map(p => ({
+        id: `u${p.id}`,
+        name: p.name,
+      }));
+
+      const allPredictions = {};
+      predictionsRes.data.forEach(p => {
+        if (!allPredictions[p.user_id]) allPredictions[p.user_id] = [];
+        allPredictions[p.user_id].push({
+          matchId: p.match_id,
+          scoreA: p.score_a,
+          scoreB: p.score_b,
+        });
+      });
+
+      const championPredictions = {};
+      championRes.data.forEach(c => {
+        championPredictions[c.user_id] = c.champion_team_id;
+      });
+
+      const officialChampion = (configRes.data.find(c => c.key === 'official_champion') || {}).value || '';
+
+      return { statusCode: 200, body: JSON.stringify({ matches, participants, allPredictions, championPredictions, officialChampion }) };
+    }
+
     // POST /api/predictions
     if (path === 'predictions' && method === 'POST') {
       const { userId, predictions } = body;
