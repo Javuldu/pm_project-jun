@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
-import { Match, Prediction, User } from '../types';
+import { Match, Prediction } from '../types';
 import { TEAMS } from '../data';
 
 interface PredictionsViewProps {
   matches: Match[];
   userPredictions: Prediction[];
-  allUserPredictions: Record<string, Prediction[]>;
-  users: User[];
   onSavePredictions: (predictions: Prediction[]) => void;
   onSaveChampion: (championId: string) => void;
   championPrediction?: string;
   confirmedMatchIds?: string[];
 }
 
-export function PredictionsView({ matches, userPredictions, allUserPredictions, users, onSavePredictions, onSaveChampion, championPrediction, confirmedMatchIds = [] }: PredictionsViewProps) {
+export function PredictionsView({ matches, userPredictions, onSavePredictions, onSaveChampion, championPrediction, confirmedMatchIds = [] }: PredictionsViewProps) {
   const [localPredictions, setLocalPredictions] = useState<Prediction[]>(userPredictions);
   const [champion, setChampion] = useState<string>(championPrediction || '');
 
@@ -214,58 +212,7 @@ export function PredictionsView({ matches, userPredictions, allUserPredictions, 
         </button>
       </div>
 
-      <div className="mt-12 bg-white rounded-xl shadow-sm border border-slate-100 p-5">
-        <h2 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">
-          {selectedDate === 'todos' ? 'Resumen Global de Pronósticos' : 'Resumen de Pronósticos del Día'} ({matchesForDay.length} partidos)
-        </h2>
-        {users.length === 0 ? (
-          <p className="text-sm text-slate-500">Ningún participante ha ingresado pronósticos aún.</p>
-        ) : (
-          <div className="space-y-6">
-            {users.map(u => {
-              const uPreds = allUserPredictions[u.id] || [];
-              if (uPreds.length === 0) return null;
-              
-              return (
-                <div key={u.id} className="text-sm">
-                  <div className="font-bold text-primary mb-2 flex items-center gap-2">
-                    <span className="w-6 h-6 bg-surface-dim rounded-full flex items-center justify-center text-xs">👤</span>
-                    {u.name}
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-8">
-                    {matchesForDay.map(m => {
-                      const p = uPreds.find(x => x.matchId === m.id);
-                      if (!p || p.scoreA === undefined || p.scoreB === undefined) {
-                        return (
-                          <div key={m.id} className="text-slate-400 text-xs py-1 border-l-2 border-slate-100 pl-2">
-                            {m.teamA.code} vs {m.teamB.code} <span className="italic">— Sin pronóstico</span>
-                          </div>
-                        );
-                      }
-                      
-                      const isDraw = p.scoreA === p.scoreB;
-                      const hasPenalties = m.stage !== 'Grupos' && isDraw && p.penaltiesWinner;
-                      
-                      return (
-                        <div key={m.id} className="text-slate-700 text-xs font-semibold py-1 border-l-2 border-primary/20 pl-2 bg-surface rounded min-h-[30px] flex items-center">
-                          <span className="w-8 inline-block text-right">{m.teamA.code}</span>
-                          <span className="mx-2 bg-white px-2 py-0.5 rounded shadow-sm border border-slate-200">
-                            {p.scoreA} - {p.scoreB}
-                          </span>
-                          <span className="w-8 inline-block">{m.teamB.code}</span>
-                          {hasPenalties && (
-                            <span className="ml-2 text-[10px] text-primary">(P: {TEAMS[p.penaltiesWinner!]?.code})</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+
     </div>
   );
 }

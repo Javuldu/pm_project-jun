@@ -445,8 +445,6 @@ export default function App() {
           <PredictionsView
             matches={matches}
             userPredictions={allUserPredictions[currentUser.id] || []}
-            allUserPredictions={allUserPredictions}
-            users={calculatedUsers}
             championPrediction={currentUser.championPrediction}
             onSavePredictions={handleSavePredictions}
             onSaveChampion={handleSaveChampion}
