@@ -127,6 +127,8 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
     e.target.value = '';
   };
 
+  const [exportMatchId, setExportMatchId] = useState<string>('');
+
   const handleExportData = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
     csvContent += "\"Partido\",\"Participante\",\"Prediccion_Local\",\"Prediccion_Visitante\"\r\n";
@@ -154,6 +156,36 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
     document.body.removeChild(link);
   };
 
+  const handleExportMatch = (matchId: string) => {
+    const match = localMatches.find(m => m.id === matchId);
+    if (!match) return;
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += `"Partido","${match.teamA.code} vs ${match.teamB.code}"\r\n`;
+    csvContent += "\"Participante\",\"Prediccion_Local\",\"Prediccion_Visitante\"";
+    if (match.stage !== 'Grupos') csvContent += ",\"Clasifica\"";
+    csvContent += "\r\n";
+
+    users.forEach(user => {
+      const preds = allUserPredictions[user.id] || [];
+      const p = preds.find(x => x.matchId === match.id);
+      const pA = p?.scoreA !== undefined ? p.scoreA : '';
+      const pB = p?.scoreB !== undefined ? p.scoreB : '';
+      const pW = p?.penaltiesWinner || '';
+      csvContent += `"${user.name}",${pA},${pB}`;
+      if (match.stage !== 'Grupos') csvContent += `,"${pW}"`;
+      csvContent += "\r\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `pronosticos_${match.teamA.code}_vs_${match.teamB.code}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="p-4 pb-24 max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between pb-4 border-b border-slate-200">
@@ -161,13 +193,32 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
           <h2 className="text-2xl font-bold text-primary">Panel de Control</h2>
           <p className="text-sm text-slate-500">Gestión de torneos y resultados.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button 
             onClick={handleExportData}
             className="bg-white border border-slate-200 text-slate-700 font-bold py-2 px-4 rounded-lg shadow-sm hover:bg-slate-50 transition text-sm"
           >
             Exportar CSV
           </button>
+          <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+            <select
+              value={exportMatchId}
+              onChange={e => setExportMatchId(e.target.value)}
+              className="p-2 text-sm font-bold text-slate-700 outline-none bg-transparent"
+            >
+              <option value="">Por partido...</option>
+              {localMatches.map(m => (
+                <option key={m.id} value={m.id}>{m.teamA.code} vs {m.teamB.code}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => { if (exportMatchId) handleExportMatch(exportMatchId); }}
+              disabled={!exportMatchId}
+              className="bg-primary text-white font-bold py-2 px-3 text-sm disabled:opacity-50"
+            >
+              Exportar
+            </button>
+          </div>
           <button
             onClick={handleSyncParticipants}
             disabled={syncing}
