@@ -199,7 +199,7 @@ app.post('/api/predictions', async (req, res) => {
 
     const { data, error } = await supabase
       .from('prediction_data')
-      .insert(rows, { onConflict: 'user_id,match_id', ignoreDuplicates: true })
+      .upsert(rows, { onConflict: 'user_id,match_id', ignoreDuplicates: true })
       .select('match_id');
 
     if (error) throw error;
