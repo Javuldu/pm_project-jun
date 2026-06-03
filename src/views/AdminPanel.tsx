@@ -125,13 +125,17 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
     csvContent += "\"Partido\",\"Participante\",\"Prediccion_Local\",\"Prediccion_Visitante\"\r\n";
     
     localMatches.forEach(match => {
+      let hasAny = false;
       users.forEach(user => {
         const preds = allUserPredictions[user.id] || [];
         const p = preds.find(x => x.matchId === match.id);
-        const pA = p?.scoreA !== undefined ? p.scoreA : '';
-        const pB = p?.scoreB !== undefined ? p.scoreB : '';
-        csvContent += `"${match.teamA.code} vs ${match.teamB.code}","${user.name}",${pA},${pB}\r\n`;
+        if (!p || p.scoreA === undefined || p.scoreB === undefined) return;
+        hasAny = true;
+        csvContent += `"${match.teamA.code} vs ${match.teamB.code}","${user.name}",${p.scoreA},${p.scoreB}\r\n`;
       });
+      if (!hasAny) {
+        csvContent += `"${match.teamA.code} vs ${match.teamB.code}","(sin pronósticos)",,\r\n`;
+      }
     });
 
     const encodedUri = encodeURI(csvContent);
