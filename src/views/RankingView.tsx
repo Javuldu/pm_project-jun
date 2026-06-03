@@ -47,6 +47,10 @@ export function RankingView({ users, currentUser, officialChampion }: RankingVie
                 <span>Por acertar el <strong>ganador o empate</strong> (sin resultado exacto).</span>
               </li>
               <li className="flex items-start gap-2">
+                <span className="font-bold text-yellow-600 mt-0.5">+1 pt</span>
+                <span>Por acertar el <strong>equipo que clasifica</strong> en partidos de eliminación directa (si pronosticaste empate).</span>
+              </li>
+              <li className="flex items-start gap-2">
                 <span className="font-bold text-yellow-600 mt-0.5">+5 pts</span>
                 <span>Por acertar al <strong>campeón del torneo</strong> (al final).</span>
               </li>

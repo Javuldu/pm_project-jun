@@ -85,6 +85,7 @@ app.get('/api/data/:userId', async (req, res) => {
       isFinished: m.is_finished,
       realScoreA: m.real_score_a,
       realScoreB: m.real_score_b,
+      realPenaltiesWinner: m.real_penalties_winner,
       isLocked: m.is_locked,
     }));
 
@@ -92,6 +93,7 @@ app.get('/api/data/:userId', async (req, res) => {
       matchId: p.match_id,
       scoreA: p.score_a,
       scoreB: p.score_b,
+      penaltiesWinner: p.penalties_winner,
     }));
 
     const championPredictions = {};
@@ -141,6 +143,7 @@ app.get('/api/all-data', async (req, res) => {
       isFinished: m.is_finished,
       realScoreA: m.real_score_a,
       realScoreB: m.real_score_b,
+      realPenaltiesWinner: m.real_penalties_winner,
       isLocked: m.is_locked,
     }));
 
@@ -156,6 +159,7 @@ app.get('/api/all-data', async (req, res) => {
         matchId: p.match_id,
         scoreA: p.score_a,
         scoreB: p.score_b,
+        penaltiesWinner: p.penalties_winner,
       });
     });
 
@@ -195,6 +199,7 @@ app.post('/api/predictions', async (req, res) => {
         match_id: p.matchId,
         score_a: p.scoreA ?? null,
         score_b: p.scoreB ?? null,
+        penalties_winner: p.penaltiesWinner || null,
       }));
 
     const { data, error } = await supabase
@@ -253,10 +258,8 @@ app.post('/api/matches', async (req, res) => {
   }
 
   try {
-    for (const m of matches) {
-      const { error } = await supabase
-        .from('match_data')
-        .upsert({
+      for (const m of matches) {
+        const { error } = await supabase.from('match_data').upsert({
           id: m.id,
           team_a_id: m.teamA?.id || m.teamA,
           team_b_id: m.teamB?.id || m.teamB,
@@ -265,6 +268,7 @@ app.post('/api/matches', async (req, res) => {
           is_finished: m.isFinished,
           real_score_a: m.realScoreA ?? null,
           real_score_b: m.realScoreB ?? null,
+          real_penalties_winner: m.realPenaltiesWinner || null,
           is_locked: m.isLocked ?? false,
         }, { onConflict: 'id' });
 

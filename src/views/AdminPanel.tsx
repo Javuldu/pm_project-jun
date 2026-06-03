@@ -33,6 +33,13 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
     }));
   };
 
+  const handlePenaltiesWinner = (matchId: string, teamId: string) => {
+    setLocalMatches(prev => prev.map(m => {
+      if (m.id === matchId) return { ...m, realPenaltiesWinner: teamId || undefined };
+      return m;
+    }));
+  };
+
   const handleToggleFinished = (matchId: string) => {
     setLocalMatches(prev => prev.map(m => {
       if (m.id === matchId) return { ...m, isFinished: !m.isFinished };
@@ -331,6 +338,20 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
                   </div>
                   <span className="w-1/3 text-left font-bold text-sm text-slate-700">{match.teamB.code}</span>
                 </div>
+                {match.stage !== 'Grupos' && (
+                  <div className="flex items-center justify-center gap-2 mt-2">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Clasifica:</span>
+                    <select
+                      value={match.realPenaltiesWinner || ''}
+                      onChange={e => handlePenaltiesWinner(match.id, e.target.value)}
+                      className="border border-slate-200 rounded p-1 text-xs font-bold text-primary bg-white"
+                    >
+                      <option value="">Sin definir...</option>
+                      <option value={match.teamA.id}>{match.teamA.name}</option>
+                      <option value={match.teamB.id}>{match.teamB.name}</option>
+                    </select>
+                  </div>
+                )}
               </div>
             )
         })}

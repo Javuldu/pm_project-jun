@@ -42,6 +42,7 @@ export const handler = async (event) => {
         isFinished: m.is_finished,
         realScoreA: m.real_score_a,
         realScoreB: m.real_score_b,
+        realPenaltiesWinner: m.real_penalties_winner,
         isLocked: m.is_locked,
       }));
 
@@ -49,6 +50,7 @@ export const handler = async (event) => {
         matchId: p.match_id,
         scoreA: p.score_a,
         scoreB: p.score_b,
+        penaltiesWinner: p.penalties_winner,
       }));
 
       const championPredictions = {};
@@ -93,6 +95,7 @@ export const handler = async (event) => {
         isFinished: m.is_finished,
         realScoreA: m.real_score_a,
         realScoreB: m.real_score_b,
+        realPenaltiesWinner: m.real_penalties_winner,
         isLocked: m.is_locked,
       }));
 
@@ -108,6 +111,7 @@ export const handler = async (event) => {
           matchId: p.match_id,
           scoreA: p.score_a,
           scoreB: p.score_b,
+          penaltiesWinner: p.penalties_winner,
         });
       });
 
@@ -142,6 +146,7 @@ export const handler = async (event) => {
           match_id: p.matchId,
           score_a: p.scoreA ?? null,
           score_b: p.scoreB ?? null,
+          penalties_winner: p.penaltiesWinner || null,
         }));
 
       const { data, error } = await supabase
@@ -200,6 +205,7 @@ export const handler = async (event) => {
           is_finished: m.isFinished,
           real_score_a: m.realScoreA ?? null,
           real_score_b: m.realScoreB ?? null,
+          real_penalties_winner: m.realPenaltiesWinner || null,
           is_locked: m.isLocked ?? false,
         }, { onConflict: 'id' });
         if (error) throw error;

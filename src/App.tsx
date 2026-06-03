@@ -129,6 +129,15 @@ export default function App() {
             ) {
               points += 1;
             }
+
+            if (
+              predA === predB &&
+              pred.penaltiesWinner &&
+              match.realPenaltiesWinner &&
+              pred.penaltiesWinner === match.realPenaltiesWinner
+            ) {
+              points += 1;
+            }
           }
         }
       });
