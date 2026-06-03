@@ -143,6 +143,7 @@ export default function App() {
         name: participant?.name || existingUser?.name || id,
         championPrediction: champPred,
         points,
+        avatarUrl: existingUser?.avatarUrl,
       };
     });
   }, [allParticipants, users, allUserPredictions, matches, officialChampion]);

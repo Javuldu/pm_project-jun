@@ -14,9 +14,11 @@ export function ProfileView({ user, onUpdateAvatar }: ProfileViewProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // In a real app, upload to server. Here we use an object URL for demo functionality.
-      const objectUrl = URL.createObjectURL(file);
-      onUpdateAvatar(objectUrl);
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        onUpdateAvatar(evt.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
