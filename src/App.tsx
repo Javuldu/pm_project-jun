@@ -52,6 +52,7 @@ export default function App() {
           isFinished: m.isFinished,
           realScoreA: m.realScoreA,
           realScoreB: m.realScoreB,
+          realPenaltiesWinner: m.realPenaltiesWinner,
           isLocked: m.isLocked,
         }));
         setMatches(mappedMatches);
@@ -206,6 +207,7 @@ export default function App() {
           isFinished: m.isFinished,
           realScoreA: m.realScoreA,
           realScoreB: m.realScoreB,
+          realPenaltiesWinner: m.realPenaltiesWinner,
           isLocked: m.isLocked,
         }));
         setMatches(mappedMatches);

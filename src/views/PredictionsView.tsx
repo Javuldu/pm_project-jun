@@ -159,14 +159,14 @@ export function PredictionsView({ matches, userPredictions, onSavePredictions, o
                             type="number" min="0" value={pred.scoreA ?? ''} 
                             onChange={(e) => handleScoreChange(match.id, 'A', e.target.value)}
                             disabled={locked || isConfirmed}
-                            className={`w-12 h-12 text-center text-xl font-bold border border-slate-300 rounded focus:border-primary focus:ring-2 focus:ring-primary/40 outline-none transition-all ${locked || isConfirmed ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-white'}`} placeholder="-"
+                            className={`w-12 h-12 text-center text-xl font-bold border border-slate-300 rounded focus:border-primary focus:ring-2 focus:ring-primary/40 outline-none transition-all ${locked || isConfirmed ? 'bg-slate-100 text-slate-800 cursor-not-allowed' : 'bg-white'}`} placeholder="-"
                           />
                           <span className="text-slate-400 font-bold text-sm">vs</span>
                           <input 
                             type="number" min="0" value={pred.scoreB ?? ''} 
                             onChange={(e) => handleScoreChange(match.id, 'B', e.target.value)}
                             disabled={locked || isConfirmed}
-                            className={`w-12 h-12 text-center text-xl font-bold border border-slate-300 rounded focus:border-primary focus:ring-2 focus:ring-primary/40 outline-none transition-all ${locked || isConfirmed ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-white'}`} placeholder="-"
+                            className={`w-12 h-12 text-center text-xl font-bold border border-slate-300 rounded focus:border-primary focus:ring-2 focus:ring-primary/40 outline-none transition-all ${locked || isConfirmed ? 'bg-slate-100 text-slate-800 cursor-not-allowed' : 'bg-white'}`} placeholder="-"
                           />
                         </div>
 
