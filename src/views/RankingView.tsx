@@ -91,38 +91,38 @@ export function RankingView({ users, currentUser, officialChampion }: RankingVie
             else if (position === 3) medalStr = '🥉';
 
             return (
-              <div key={user.id} className={`flex items-center justify-between px-4 py-3 transition-colors flex-wrap gap-y-2 ${isCurrent ? 'bg-blue-50/50' : 'hover:bg-slate-50'}`}>
-                <div className="w-12 text-center font-bold text-slate-400 text-lg">
+              <div key={user.id} className={`flex items-center justify-between px-3 py-2.5 ${isCurrent ? 'bg-blue-50/50' : 'hover:bg-slate-50'}`}>
+                <div className="w-8 text-center font-bold text-slate-400 text-sm shrink-0">
                   {medalStr || position}
                 </div>
                 
-                <div className="flex-1 flex items-center gap-3">
+                <div className="flex-1 flex items-center gap-2 min-w-0">
                   {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.name} className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-sm shrink-0" />
+                    <img src={user.avatarUrl} alt={user.name} className="w-7 h-7 rounded-full object-cover border border-white shadow-sm shrink-0" />
                   ) : (
-                    <div className="w-11 h-11 rounded-full bg-surface-dim text-primary flex items-center justify-center border-2 border-white shadow-sm shrink-0">
-                      <UserCircle className="w-7 h-7" />
+                    <div className="w-7 h-7 rounded-full bg-surface-dim text-primary flex items-center justify-center border border-white shadow-sm shrink-0">
+                      <UserCircle className="w-5 h-5" />
                     </div>
                   )}
-                  <div className="flex flex-col overflow-hidden">
-                    <span className={`font-bold truncate pr-2 ${isCurrent ? 'text-primary' : 'text-slate-800'}`}>
+                  <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                    <span className={`font-bold text-sm truncate ${isCurrent ? 'text-primary' : 'text-slate-800'}`}>
                       {user.name}
-                      {isCurrent && <span className="ml-2 text-[10px] bg-primary text-white px-2 py-0.5 rounded-full shadow-sm align-middle">TÚ</span>}
+                      {isCurrent && <span className="ml-1 text-[9px] bg-primary text-white px-1.5 py-0.5 rounded-full shadow-sm align-middle">TÚ</span>}
                     </span>
                     {user.championPrediction && TEAMS[user.championPrediction] && (
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className="text-[10px] bg-surface text-primary border border-surface-dim px-1.5 py-0.5 rounded font-bold uppercase tracking-wide truncate">
+                      <>
+                        <span className="text-[9px] bg-surface text-primary border border-surface-dim px-1 py-0.5 rounded font-bold uppercase truncate hidden sm:inline">
                           🏆 {TEAMS[user.championPrediction].name}
                         </span>
                         {officialChampion === user.championPrediction && (
-                          <span className="text-[10px] text-green-700 font-bold bg-green-100 px-1.5 py-0.5 rounded">✓ +5</span>
+                          <span className="text-[9px] text-green-700 font-bold bg-green-100 px-1 py-0.5 rounded shrink-0">+5</span>
                         )}
-                      </div>
+                      </>
                     )}
                   </div>
                 </div>
 
-                <div className="w-16 sm:w-20 text-right font-black text-2xl text-primary shrink-0 tracking-tight">
+                <div className="w-10 text-right font-black text-base text-primary shrink-0">
                   {user.points}
                 </div>
               </div>

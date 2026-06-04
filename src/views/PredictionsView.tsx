@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Match, Prediction } from '../types';
 import { TEAMS } from '../data';
 
@@ -14,6 +14,10 @@ interface PredictionsViewProps {
 export function PredictionsView({ matches, userPredictions, onSavePredictions, onSaveChampion, championPrediction, confirmedMatchIds = [] }: PredictionsViewProps) {
   const [localPredictions, setLocalPredictions] = useState<Prediction[]>(userPredictions);
   const [champion, setChampion] = useState<string>(championPrediction || '');
+
+  useEffect(() => {
+    setLocalPredictions(userPredictions);
+  }, [userPredictions]);
 
   // Extract all unique dates
   const allDates = Array.from(new Set(matches.map(m => m.date.split('T')[0]))).sort();
