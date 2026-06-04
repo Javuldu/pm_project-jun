@@ -22,6 +22,7 @@ export function PredictionsView({ matches, userPredictions, onSavePredictions, o
   const matchesForDay = selectedDate === 'todos' ? matches : matches.filter(m => m.date.startsWith(selectedDate));
 
   const handleScoreChange = (matchId: string, team: 'A' | 'B', value: string) => {
+    if (value !== '' && !/^\d+$/.test(value)) return;
     const numValue = value === '' ? '' : parseInt(value, 10);
     if (value !== '' && (isNaN(numValue as number) || (numValue as number) < 0)) return;
 
@@ -30,6 +31,12 @@ export function PredictionsView({ matches, userPredictions, onSavePredictions, o
       const updated = { ...existing, [team === 'A' ? 'scoreA' : 'scoreB']: numValue };
       return [...prev.filter(p => p.matchId !== matchId), updated];
     });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!/^\d$/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+      e.preventDefault();
+    }
   };
 
   const handlePenaltiesChange = (matchId: string, winnerId: string) => {
@@ -156,15 +163,17 @@ export function PredictionsView({ matches, userPredictions, onSavePredictions, o
 
                         <div className={`flex items-center gap-2 px-3 shadow-sm py-2 rounded-lg ${locked || isConfirmed ? 'bg-slate-100' : 'bg-surface'}`}>
                           <input 
-                            type="number" min="0" value={pred.scoreA ?? ''} 
+                            type="text" inputMode="numeric" maxLength={2} value={pred.scoreA ?? ''} 
                             onChange={(e) => handleScoreChange(match.id, 'A', e.target.value)}
+                            onKeyDown={handleKeyDown}
                             disabled={locked || isConfirmed}
                             className={`w-12 h-12 text-center text-xl font-bold border border-slate-300 rounded focus:border-primary focus:ring-2 focus:ring-primary/40 outline-none transition-all ${locked || isConfirmed ? 'bg-slate-100 text-slate-800 cursor-not-allowed' : 'bg-white'}`} placeholder="-"
                           />
                           <span className="text-slate-400 font-bold text-sm">vs</span>
                           <input 
-                            type="number" min="0" value={pred.scoreB ?? ''} 
+                            type="text" inputMode="numeric" maxLength={2} value={pred.scoreB ?? ''} 
                             onChange={(e) => handleScoreChange(match.id, 'B', e.target.value)}
+                            onKeyDown={handleKeyDown}
                             disabled={locked || isConfirmed}
                             className={`w-12 h-12 text-center text-xl font-bold border border-slate-300 rounded focus:border-primary focus:ring-2 focus:ring-primary/40 outline-none transition-all ${locked || isConfirmed ? 'bg-slate-100 text-slate-800 cursor-not-allowed' : 'bg-white'}`} placeholder="-"
                           />

@@ -299,14 +299,18 @@ export default function App() {
         if (data.saved && data.saved.length > 0) {
           setConfirmedMatchIds(prev => [...new Set([...prev, ...data.saved])]);
         }
-        const totalSaved = data.saved?.length || 0;
-        const totalLocked = data.locked?.length || 0;
-        let msg: string;
-        if (totalLocked > 0) {
-          msg = `Guardados: ${totalSaved} nuevos, ${totalLocked} ya estaban confirmados.`;
-        } else {
-          msg = '¡Pronósticos guardados correctamente!';
-        }
+        const savedPreds = predictions.filter(p => data.saved?.includes(p.matchId));
+        const savedDesc = savedPreds.map(p => {
+          const match = matches.find(m => m.id === p.matchId);
+          if (!match) return '';
+          const label = `${match.teamA.code} ${p.scoreA}-${p.scoreB} ${match.teamB.code}`;
+          if (p.penaltiesWinner) {
+            const team = TEAMS[p.penaltiesWinner];
+            return `${label} (clasifica: ${team?.code || p.penaltiesWinner})`;
+          }
+          return label;
+        }).filter(Boolean).join(', ');
+        const msg = savedDesc ? `✅ ${savedDesc}` : '✅ Pronósticos guardados';
         setPopupMessage(msg);
       }
     } catch {
