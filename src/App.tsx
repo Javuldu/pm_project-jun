@@ -110,6 +110,7 @@ export default function App() {
       const participant = allParticipants.find(p => p.id === id);
       const existingUser = users.find(u => u.id === id);
       let points = 0;
+      let exactHits = 0;
 
       const uPreds = allUserPredictions[id] || [];
       matches.forEach(match => {
@@ -123,6 +124,7 @@ export default function App() {
 
             if (realA === predA && realB === predB) {
               points += 3;
+              exactHits++;
             } else if (
               (realA > realB && predA > predB) ||
               (realA < realB && predA < predB) ||
@@ -153,6 +155,7 @@ export default function App() {
         name: participant?.name || existingUser?.name || id,
         championPrediction: champPred,
         points,
+        exactHits,
         avatarUrl: existingUser?.avatarUrl,
       };
     });
@@ -181,7 +184,7 @@ export default function App() {
       const uid = data.user.id;
       let u = users.find(x => x.name.toLowerCase() === name.toLowerCase());
       if (!u) {
-        u = { id: uid, name: data.user.name, points: 0 };
+        u = { id: uid, name: data.user.name, points: 0, exactHits: 0 };
         setUsers(prev => [...prev, u!]);
       }
       setCurrentUserId(uid);

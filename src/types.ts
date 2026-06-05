@@ -33,6 +33,7 @@ export interface User {
   avatarUrl?: string; // Can be uploaded
   championPrediction?: string; // teamId
   points: number;
+  exactHits: number;
 }
 
 export type ViewState = 'welcome' | 'predictions' | 'ranking' | 'adminLogin' | 'adminPanel' | 'profile';

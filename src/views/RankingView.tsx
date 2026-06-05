@@ -75,10 +75,11 @@ export function RankingView({ users, currentUser, officialChampion }: RankingVie
       )}
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="flex items-center justify-between bg-surface-dim px-4 py-3 border-b border-slate-200 text-xs font-black text-primary uppercase tracking-wide">
-          <span className="w-12 text-center">POS</span>
+        <div className="flex items-center justify-between bg-surface-dim px-3 py-2.5 border-b border-slate-200 text-[10px] font-black text-primary uppercase tracking-wide">
+          <span className="w-8 text-center">POS</span>
           <span className="flex-1">JUGADOR</span>
-          <span className="w-20 text-right">PUNTOS</span>
+          <span className="w-8 text-center" title="Aciertos exactos (3pts)">3PT</span>
+          <span className="w-10 text-right">PTS</span>
         </div>
 
         <div className="divide-y divide-slate-100">
@@ -122,6 +123,9 @@ export function RankingView({ users, currentUser, officialChampion }: RankingVie
                   </div>
                 </div>
 
+                <div className="w-8 text-center text-xs font-bold text-slate-500 shrink-0">
+                  {user.exactHits}
+                </div>
                 <div className="w-10 text-right font-black text-base text-primary shrink-0">
                   {user.points}
                 </div>
