@@ -470,7 +470,7 @@ export default function App() {
           />
         )}
 
-        {currentView === 'ranking' && currentUser && (
+        {currentView === 'ranking' && (currentUser || isAdmin) && (
           <RankingView
             users={calculatedUsers}
             currentUser={currentUser}

@@ -5,7 +5,7 @@ import { UserCircle, Info, Download } from 'lucide-react';
 
 interface RankingViewProps {
   users: User[];
-  currentUser: User;
+  currentUser?: User;
   officialChampion?: string;
   isAdmin?: boolean;
 }
@@ -110,7 +110,7 @@ export function RankingView({ users, currentUser, officialChampion, isAdmin }: R
 
         <div className="divide-y divide-slate-100">
           {sortedUsers.map((user, index) => {
-            const isCurrent = user.id === currentUser.id;
+            const isCurrent = currentUser ? user.id === currentUser.id : false;
             const position = index + 1;
             let medalStr = '';
             if (position === 1) medalStr = '🥇';
