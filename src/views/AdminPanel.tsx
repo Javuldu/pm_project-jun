@@ -131,7 +131,10 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
 
   const handleExportData = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "\"Partido\",\"Participante\",\"Prediccion_Local\",\"Prediccion_Visitante\"\r\n";
+    const hasKnockout = localMatches.some(m => m.stage !== 'Grupos');
+    csvContent += "\"Partido\",\"Participante\",\"Prediccion_Local\",\"Prediccion_Visitante\"";
+    if (hasKnockout) csvContent += ",\"Clasifica\"";
+    csvContent += "\r\n";
     
     localMatches.forEach(match => {
       let hasAny = false;
@@ -140,10 +143,14 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
         const p = preds.find(x => x.matchId === match.id);
         if (!p || p.scoreA === undefined || p.scoreB === undefined) return;
         hasAny = true;
-        csvContent += `"${match.teamA.code} vs ${match.teamB.code}","${user.name}",${p.scoreA},${p.scoreB}\r\n`;
+        csvContent += `"${match.teamA.code} vs ${match.teamB.code}","${user.name}",${p.scoreA},${p.scoreB}`;
+        if (match.stage !== 'Grupos') csvContent += `,"${TEAMS[p.penaltiesWinner]?.code || p.penaltiesWinner}"`;
+        csvContent += "\r\n";
       });
       if (!hasAny) {
-        csvContent += `"${match.teamA.code} vs ${match.teamB.code}","(sin pronósticos)",,\r\n`;
+        csvContent += `"${match.teamA.code} vs ${match.teamB.code}","(sin pronósticos)",,`;
+        if (match.stage !== 'Grupos') csvContent += `,""`;
+        csvContent += "\r\n";
       }
     });
 
@@ -173,7 +180,7 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
       const pB = p?.scoreB !== undefined ? p.scoreB : '';
       const pW = p?.penaltiesWinner || '';
       csvContent += `"${user.name}",${pA},${pB}`;
-      if (match.stage !== 'Grupos') csvContent += `,"${pW}"`;
+      if (match.stage !== 'Grupos') csvContent += `,"${TEAMS[pW]?.code || pW}"`;
       csvContent += "\r\n";
     });
 
