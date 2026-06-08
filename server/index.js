@@ -65,7 +65,7 @@ app.get('/api/data/:userId', async (req, res) => {
     const { userId } = req.params;
 
     const [matchesRes, predictionsRes, championRes, configRes] = await Promise.all([
-      supabase.from('match_data').select('*').order('id'),
+      supabase.from('match_data').select('*').order('date', { ascending: false }),
       supabase.from('prediction_data').select('*').eq('user_id', userId),
       supabase.from('champion_data').select('*'),
       supabase.from('app_config').select('*'),
@@ -121,7 +121,7 @@ app.get('/api/data/:userId', async (req, res) => {
 app.get('/api/all-data', async (req, res) => {
   try {
     const [matchesRes, participantsRes, predictionsRes, championRes, configRes] = await Promise.all([
-      supabase.from('match_data').select('*').order('id'),
+      supabase.from('match_data').select('*').order('date', { ascending: false }),
       supabase.from('participants').select('id, name').order('id'),
       supabase.from('prediction_data').select('*'),
       supabase.from('champion_data').select('*'),

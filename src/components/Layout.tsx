@@ -6,9 +6,10 @@ import appLogo from './logo.jpeg';
 interface TopBarProps {
   onAvatarClick: () => void;
   isAdmin: boolean;
+  avatarUrl?: string;
 }
 
-export function TopBar({ onAvatarClick, isAdmin }: TopBarProps) {
+export function TopBar({ onAvatarClick, isAdmin, avatarUrl }: TopBarProps) {
   return (
     <header className="bg-surface sticky top-0 z-10 border-b border-surface-dim shadow-sm">
       <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -24,9 +25,13 @@ export function TopBar({ onAvatarClick, isAdmin }: TopBarProps) {
         {!isAdmin ? (
            <button 
             onClick={onAvatarClick}
-            className="p-2 -mr-2 text-primary hover:bg-surface-dim rounded-full transition-colors"
+            className="p-0 -mr-2 text-primary hover:bg-surface-dim rounded-full transition-colors overflow-hidden"
            >
-             <UserCircle className="w-7 h-7" />
+             {avatarUrl ? (
+               <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover border border-white shadow-sm" />
+             ) : (
+               <UserCircle className="w-7 h-7" />
+             )}
            </button>
         ) : (
            <div className="w-7"></div>

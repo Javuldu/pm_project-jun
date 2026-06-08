@@ -30,6 +30,7 @@ export default function App() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [allParticipants, setAllParticipants] = useState<{id: string; name: string}[]>([]);
   const [confirmedMatchIds, setConfirmedMatchIds] = useState<string[]>([]);
+  const [avatarMap, setAvatarMap] = useState<Record<string, string>>({});
 
   // Load common data + user-specific predictions from Supabase
   const loadData = useCallback(async (userId?: string) => {
@@ -75,6 +76,7 @@ export default function App() {
       }
 
       if (data.avatarUrls) {
+        setAvatarMap(data.avatarUrls);
         setUsers(prev => prev.map(u => ({
           ...u,
           avatarUrl: data.avatarUrls[u.id] || u.avatarUrl,
@@ -156,10 +158,10 @@ export default function App() {
         championPrediction: champPred,
         points,
         exactHits,
-        avatarUrl: existingUser?.avatarUrl,
+        avatarUrl: avatarMap[id] || existingUser?.avatarUrl,
       };
     });
-  }, [allParticipants, users, allUserPredictions, matches, officialChampion]);
+  }, [allParticipants, users, allUserPredictions, matches, officialChampion, avatarMap]);
 
   const currentUser = calculatedUsers.find(u => u.id === currentUserId);
 
@@ -240,6 +242,7 @@ export default function App() {
       }
 
       if (data.avatarUrls) {
+        setAvatarMap(data.avatarUrls);
         setUsers(prev => prev.map(u => ({
           ...u,
           avatarUrl: data.avatarUrls[u.id] || u.avatarUrl,
@@ -446,7 +449,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-surface relative font-inter">
       {currentView !== 'welcome' && (
-        <TopBar onAvatarClick={() => setCurrentView('profile')} isAdmin={isAdmin} />
+        <TopBar onAvatarClick={() => setCurrentView('profile')} isAdmin={isAdmin} avatarUrl={currentUser?.avatarUrl} />
       )}
 
       <main className="flex-1 w-full overflow-y-auto">

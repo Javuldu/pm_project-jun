@@ -22,7 +22,7 @@ export const handler = async (event) => {
       const userId = getId(path);
 
       const [matchesRes, predictionsRes, championRes, configRes] = await Promise.all([
-        supabase.from('match_data').select('*').order('id'),
+        supabase.from('match_data').select('*').order('date', { ascending: false }),
         supabase.from('prediction_data').select('*').eq('user_id', userId),
         supabase.from('champion_data').select('*'),
         supabase.from('app_config').select('*'),
@@ -73,7 +73,7 @@ export const handler = async (event) => {
     // GET /api/all-data
     if (path === 'all-data' && method === 'GET') {
       const [matchesRes, participantsRes, predictionsRes, championRes, configRes] = await Promise.all([
-        supabase.from('match_data').select('*').order('id'),
+        supabase.from('match_data').select('*').order('date', { ascending: false }),
         supabase.from('participants').select('id, name').order('id'),
         supabase.from('prediction_data').select('*'),
         supabase.from('champion_data').select('*'),
