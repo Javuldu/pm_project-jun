@@ -54,8 +54,8 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
     }));
   };
 
-  const handleSaveAll = () => {
-    onUpdateResults(localMatches);
+  const handleSaveAll = async () => {
+    await onUpdateResults(localMatches);
     onShowPopup('Resultados y configuraciones actualizados exitosamente');
   };
 

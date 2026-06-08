@@ -116,7 +116,7 @@ export default function App() {
 
       const uPreds = allUserPredictions[id] || [];
       matches.forEach(match => {
-        if (match.isFinished && match.realScoreA !== undefined && match.realScoreB !== undefined) {
+        if (match.isFinished && match.realScoreA != null && match.realScoreB != null) {
           const pred = uPreds.find(p => p.matchId === match.id);
           if (pred && typeof pred.scoreA === 'number' && typeof pred.scoreB === 'number') {
             const realA = match.realScoreA;
