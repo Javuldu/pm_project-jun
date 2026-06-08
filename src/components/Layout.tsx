@@ -50,6 +50,7 @@ export function BottomNav({ currentView, onChangeView, isAdmin }: BottomNavProps
   ];
 
   const adminNavItems = [
+    { id: 'ranking', label: 'Ranking', icon: Trophy },
     { id: 'adminPanel', label: 'Admin', icon: ShieldAlert },
     { id: 'welcome', label: 'Salir', icon: LogOut },
   ];
