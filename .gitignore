@@ -33,3 +33,4 @@ dist/
 
 # Agents directory (from Antigravity / agent tools)
 .agents/
+~$*.xlsx
