@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User } from '../types';
 import { TEAMS } from '../data';
-import { UserCircle, Info } from 'lucide-react';
+import { UserCircle, Info, Download } from 'lucide-react';
 
 interface RankingViewProps {
   users: User[];
@@ -14,16 +14,39 @@ export function RankingView({ users, currentUser, officialChampion }: RankingVie
   const sortedUsers = [...users].sort((a, b) => b.points - a.points);
   const officialTeam = officialChampion ? TEAMS[officialChampion] : null;
 
+  const handleExportRanking = () => {
+    let csv = "data:text/csv;charset=utf-8,";
+    csv += "POS,Participante,Puntos,Aciertos_Exactos(3pt)\r\n";
+    sortedUsers.forEach((u, i) => {
+      csv += `${i+1},"${u.name}",${u.points},${u.exactHits}\r\n`;
+    });
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csv));
+    link.setAttribute("download", "ranking_mundial_2026.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="p-4 pb-24 max-w-3xl mx-auto space-y-6">
       <div className="text-center py-6 relative">
-        <button 
-          onClick={() => setShowRules(true)}
-          className="absolute right-0 top-6 text-primary hover:bg-surface-dim p-2 rounded-full transition"
-          aria-label="Reglas de puntuación"
-        >
-          <Info className="w-6 h-6" />
-        </button>
+        <div className="absolute right-0 top-6 flex gap-1">
+          <button 
+            onClick={handleExportRanking}
+            className="text-primary hover:bg-surface-dim p-2 rounded-full transition"
+            aria-label="Descargar ranking CSV"
+          >
+            <Download className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setShowRules(true)}
+            className="text-primary hover:bg-surface-dim p-2 rounded-full transition"
+            aria-label="Reglas de puntuación"
+          >
+            <Info className="w-6 h-6" />
+          </button>
+        </div>
         <h2 className="text-3xl font-black text-primary tracking-tight">RANKING GLOBAL</h2>
         <p className="text-slate-500 mt-2 font-medium">Demuestra quién sabe más de fútbol</p>
       </div>
