@@ -475,6 +475,7 @@ export default function App() {
             users={calculatedUsers}
             currentUser={currentUser}
             officialChampion={officialChampion}
+            isAdmin={isAdmin}
           />
         )}
 

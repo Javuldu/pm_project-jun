@@ -7,9 +7,10 @@ interface RankingViewProps {
   users: User[];
   currentUser: User;
   officialChampion?: string;
+  isAdmin?: boolean;
 }
 
-export function RankingView({ users, currentUser, officialChampion }: RankingViewProps) {
+export function RankingView({ users, currentUser, officialChampion, isAdmin }: RankingViewProps) {
   const [showRules, setShowRules] = useState(false);
   const sortedUsers = [...users].sort((a, b) => b.points - a.points);
   const officialTeam = officialChampion ? TEAMS[officialChampion] : null;
@@ -32,13 +33,15 @@ export function RankingView({ users, currentUser, officialChampion }: RankingVie
     <div className="p-4 pb-24 max-w-3xl mx-auto space-y-6">
       <div className="text-center py-6 relative">
         <div className="absolute right-0 top-6 flex gap-1">
-          <button 
-            onClick={handleExportRanking}
-            className="text-primary hover:bg-surface-dim p-2 rounded-full transition"
-            aria-label="Descargar ranking CSV"
-          >
-            <Download className="w-5 h-5" />
-          </button>
+          {isAdmin && (
+            <button 
+              onClick={handleExportRanking}
+              className="text-primary hover:bg-surface-dim p-2 rounded-full transition"
+              aria-label="Descargar ranking CSV"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+          )}
           <button 
             onClick={() => setShowRules(true)}
             className="text-primary hover:bg-surface-dim p-2 rounded-full transition"
