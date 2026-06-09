@@ -166,10 +166,17 @@ export function PredictionsView({ matches, userPredictions, onSavePredictions, o
                         </div>
 
                         {locked || isConfirmed ? (
-                          <div className="flex items-center gap-3 px-5 py-2 rounded-lg bg-green-100 border-2 border-green-300 font-bold text-xl text-green-900">
-                            <span>{pred.scoreA ?? '-'}</span>
-                            <span className="text-green-400">vs</span>
-                            <span>{pred.scoreB ?? '-'}</span>
+                          <div className="flex flex-col items-center gap-1">
+                            <div className="flex items-center gap-3 px-4 py-1.5 rounded-lg bg-green-100 border-2 border-green-300 font-bold text-base text-green-900">
+                              <span>{pred.scoreA ?? '-'}</span>
+                              <span className="text-green-400 text-sm">vs</span>
+                              <span>{pred.scoreB ?? '-'}</span>
+                            </div>
+                            {match.isFinished && match.realScoreA != null && match.realScoreB != null && (
+                              <div className="flex items-center gap-1 px-3 py-0.5 rounded bg-slate-100 text-[11px] font-bold text-slate-500">
+                                Final: {match.realScoreA}–{match.realScoreB}
+                              </div>
+                            )}
                           </div>
                         ) : (
                         <div className="flex items-center gap-2 px-3 shadow-sm py-2 rounded-lg bg-surface">
