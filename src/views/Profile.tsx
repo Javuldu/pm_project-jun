@@ -19,12 +19,12 @@ export function ProfileView({ user, onUpdateAvatar }: ProfileViewProps) {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const size = 100;
+        const size = 200;
         canvas.width = size;
         canvas.height = size;
         const ctx = canvas.getContext('2d')!;
         ctx.drawImage(img, 0, 0, size, size);
-        onUpdateAvatar(canvas.toDataURL('image/jpeg', 0.7));
+        onUpdateAvatar(canvas.toDataURL('image/jpeg', 0.85));
       };
       img.src = evt.target?.result as string;
     };

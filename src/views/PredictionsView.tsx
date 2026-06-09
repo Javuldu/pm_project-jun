@@ -206,7 +206,7 @@ export function PredictionsView({ matches, userPredictions, onSavePredictions, o
 
                       {needsPenalties && !isConfirmed && !locked && (
                         <div className="mt-5 p-3 rounded-lg flex items-center justify-between border bg-surface border-slate-100">
-                          <span className="text-xs font-bold text-slate-600 uppercase">¿Quién clasifica? (Penales)</span>
+                          <span className="text-xs font-bold text-slate-600 uppercase">¿Quién clasifica? (T. Extra / Penales)</span>
                           <select 
                             value={pred.penaltiesWinner || ''}
                             onChange={(e) => handlePenaltiesChange(match.id, e.target.value)}
