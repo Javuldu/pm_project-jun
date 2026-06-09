@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User } from '../types';
 import { TEAMS } from '../data';
-import { UserCircle, Info, Download } from 'lucide-react';
+import { UserCircle, Info, Download, Trophy } from 'lucide-react';
 
 interface RankingViewProps {
   users: User[];
@@ -29,18 +29,43 @@ export function RankingView({ users, currentUser, officialChampion, isAdmin }: R
     document.body.removeChild(link);
   };
 
+  const handleExportChampions = () => {
+    let csv = "data:text/csv;charset=utf-8,";
+    csv += "Participante,Equipo_Campeon,COD_FIFA\r\n";
+    sortedUsers.forEach(u => {
+      const champ = u.championPrediction ? TEAMS[u.championPrediction] : null;
+      csv += `"${u.name}","${champ?.name || ''}","${champ?.code || ''}"\r\n`;
+    });
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csv));
+    link.setAttribute("download", "pronosticos_campeon_2026.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="p-4 pb-24 max-w-3xl mx-auto space-y-6">
       <div className="text-center py-6 relative">
         <div className="absolute right-0 top-6 flex gap-1">
           {isAdmin && (
-            <button 
-              onClick={handleExportRanking}
-              className="text-primary hover:bg-surface-dim p-2 rounded-full transition"
-              aria-label="Descargar ranking CSV"
-            >
-              <Download className="w-5 h-5" />
-            </button>
+            <>
+              <button 
+                onClick={handleExportRanking}
+                className="text-primary hover:bg-surface-dim p-2 rounded-full transition"
+                aria-label="Descargar ranking CSV"
+              >
+                <Download className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={handleExportChampions}
+                className="text-primary hover:bg-surface-dim p-2 rounded-full transition"
+                aria-label="Descargar pronósticos campeón CSV"
+                title="Pronósticos Campeón"
+              >
+                <Trophy className="w-5 h-5" />
+              </button>
+            </>
           )}
           <button 
             onClick={() => setShowRules(true)}
