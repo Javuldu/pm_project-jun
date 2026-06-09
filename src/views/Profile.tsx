@@ -13,13 +13,22 @@ export function ProfileView({ user, onUpdateAvatar }: ProfileViewProps) {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        onUpdateAvatar(evt.target?.result as string);
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const size = 100;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, size, size);
+        onUpdateAvatar(canvas.toDataURL('image/jpeg', 0.7));
       };
-      reader.readAsDataURL(file);
-    }
+      img.src = evt.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleUrlSubmit = (e: React.FormEvent) => {

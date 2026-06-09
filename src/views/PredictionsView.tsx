@@ -20,7 +20,7 @@ export function PredictionsView({ matches, userPredictions, onSavePredictions, o
   }, [userPredictions]);
 
   // Extract all unique dates
-  const allDates = Array.from(new Set(matches.map(m => m.date.split('T')[0]))).sort();
+  const allDates = Array.from(new Set(matches.map(m => m.date.split('T')[0]))).sort().reverse();
   const [selectedDate, setSelectedDate] = useState<string>('todos');
 
   const matchesForDay = selectedDate === 'todos' ? matches : matches.filter(m => m.date.startsWith(selectedDate));
