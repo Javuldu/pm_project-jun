@@ -31,6 +31,7 @@ export default function App() {
   const [allParticipants, setAllParticipants] = useState<{id: string; name: string}[]>([]);
   const [confirmedMatchIds, setConfirmedMatchIds] = useState<string[]>([]);
   const [avatarMap, setAvatarMap] = useState<Record<string, string>>({});
+  const [championMap, setChampionMap] = useState<Record<string, string>>({});
 
   // Load common data + user-specific predictions from Supabase
   const loadData = useCallback(async (userId?: string) => {
@@ -65,6 +66,7 @@ export default function App() {
       }
 
       if (data.championPredictions) {
+        setChampionMap(data.championPredictions);
         setUsers(prev => prev.map(u => ({
           ...u,
           championPrediction: data.championPredictions[u.id] || u.championPrediction,
@@ -147,7 +149,7 @@ export default function App() {
         }
       });
 
-      const champPred = existingUser?.championPrediction;
+      const champPred = championMap[id] || existingUser?.championPrediction;
       if (officialChampion && champPred === officialChampion) {
         points += 5;
       }
@@ -161,7 +163,7 @@ export default function App() {
         avatarUrl: avatarMap[id] || existingUser?.avatarUrl,
       };
     });
-  }, [allParticipants, users, allUserPredictions, matches, officialChampion, avatarMap]);
+  }, [allParticipants, users, allUserPredictions, matches, officialChampion, avatarMap, championMap]);
 
   const currentUser = calculatedUsers.find(u => u.id === currentUserId);
 
@@ -231,6 +233,7 @@ export default function App() {
       }
 
       if (data.championPredictions) {
+        setChampionMap(data.championPredictions);
         setUsers(prev => prev.map(u => ({
           ...u,
           championPrediction: data.championPredictions[u.id] || u.championPrediction,
