@@ -74,7 +74,7 @@ export function PredictionsView({ matches, userPredictions, onSavePredictions, o
               value={champion}
               onChange={(e) => setChampion(e.target.value)}
               disabled={isChampionLocked}
-              className={`border border-slate-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none max-w-[150px] sm:max-w-xs font-semibold text-slate-700 ${isChampionLocked ? 'bg-slate-100 opacity-80' : 'bg-surface'}`}
+               className={`border border-slate-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none w-full sm:max-w-xs font-semibold text-slate-700 ${isChampionLocked ? 'bg-slate-100 opacity-80' : 'bg-surface'}`}
             >
               <option value="">Ninguno...</option>
               {Object.values(TEAMS).map(t => (

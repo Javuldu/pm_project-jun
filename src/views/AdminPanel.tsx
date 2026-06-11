@@ -195,75 +195,75 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
 
   return (
     <div className="p-4 pb-24 max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-        <div>
-          <h2 className="text-2xl font-bold text-primary">Panel de Control</h2>
-          <p className="text-sm text-slate-500">Gestión de torneos y resultados.</p>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <button 
-            onClick={handleExportData}
-            className="bg-white border border-slate-200 text-slate-700 font-bold py-2 px-4 rounded-lg shadow-sm hover:bg-slate-50 transition text-sm"
-          >
-            Exportar CSV
-          </button>
-          <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-            <select
-              value={exportMatchId}
-              onChange={e => setExportMatchId(e.target.value)}
-              className="p-2 text-sm font-bold text-slate-700 outline-none bg-transparent"
-            >
-              <option value="">Por partido...</option>
-              {localMatches.map(m => (
-                <option key={m.id} value={m.id}>{m.teamA.code} vs {m.teamB.code}</option>
-              ))}
-            </select>
-            <button
-              onClick={() => { if (exportMatchId) handleExportMatch(exportMatchId); }}
-              disabled={!exportMatchId}
-              className="bg-primary text-white font-bold py-2 px-3 text-sm disabled:opacity-50"
-            >
-              Exportar
-            </button>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-200 gap-3">
+          <div>
+            <h2 className="text-2xl font-bold text-primary">Panel de Control</h2>
+            <p className="text-sm text-slate-500">Gestión de torneos y resultados.</p>
           </div>
-          <button
-            onClick={handleSyncParticipants}
-            disabled={syncing}
-            className="bg-white border border-slate-200 text-slate-700 font-bold py-2 px-4 rounded-lg shadow-sm hover:bg-slate-50 transition text-sm disabled:opacity-50 flex items-center gap-1"
-          >
-            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'Sincronizando...' : 'Sync Excel'}
-          </button>
-          <label className="bg-white border border-slate-200 text-slate-700 font-bold py-2 px-4 rounded-lg shadow-sm hover:bg-slate-50 transition text-sm cursor-pointer">
-            Subir Excel
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-          </label>
-          <button 
-            onClick={handleSaveAll}
-            className="bg-secondary text-white font-bold py-2 px-6 rounded-lg shadow-sm hover:bg-red-700 transition"
-          >
-            Guardar Resultados
-          </button>
-          {onResetData && (
-            <button
-              onClick={() => {
-                if (window.confirm('¿Reiniciar todos los datos? Se borrarán predicciones, resultados y campeón oficial.')) {
-                  onResetData();
-                }
-              }}
-              className="bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-sm hover:bg-red-800 transition text-sm"
+          <div className="flex gap-1.5 flex-wrap w-full sm:w-auto">
+            <button 
+              onClick={handleExportData}
+              className="bg-white border border-slate-200 text-slate-700 font-bold py-2 px-3 rounded-lg shadow-sm hover:bg-slate-50 transition text-[11px] sm:text-sm"
             >
-              Reiniciar Todo
+              Exportar CSV
             </button>
-          )}
+            <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden text-[11px] sm:text-sm">
+              <select
+                value={exportMatchId}
+                onChange={e => setExportMatchId(e.target.value)}
+                className="p-2 font-bold text-slate-700 outline-none bg-transparent"
+              >
+                <option value="">Por partido...</option>
+                {localMatches.map(m => (
+                  <option key={m.id} value={m.id}>{m.teamA.code} vs {m.teamB.code}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => { if (exportMatchId) handleExportMatch(exportMatchId); }}
+                disabled={!exportMatchId}
+                className="bg-primary text-white font-bold py-2 px-2 disabled:opacity-50"
+              >
+                Exportar
+              </button>
+            </div>
+            <button
+              onClick={handleSyncParticipants}
+              disabled={syncing}
+              className="bg-white border border-slate-200 text-slate-700 font-bold py-2 px-3 rounded-lg shadow-sm hover:bg-slate-50 transition disabled:opacity-50 flex items-center gap-1 text-[11px] sm:text-sm"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Sincronizando...' : 'Sync Excel'}
+            </button>
+            <label className="bg-white border border-slate-200 text-slate-700 font-bold py-2 px-3 rounded-lg shadow-sm hover:bg-slate-50 transition cursor-pointer text-[11px] sm:text-sm">
+              Subir Excel
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </label>
+            <button 
+              onClick={handleSaveAll}
+              className="bg-secondary text-white font-bold py-2 px-4 rounded-lg shadow-sm hover:bg-red-700 transition text-[11px] sm:text-sm"
+            >
+              Guardar
+            </button>
+            {onResetData && (
+              <button
+                onClick={() => {
+                  if (window.confirm('¿Reiniciar todos los datos? Se borrarán predicciones, resultados y campeón oficial.')) {
+                    onResetData();
+                  }
+                }}
+                className="bg-red-600 text-white font-bold py-2 px-3 rounded-lg shadow-sm hover:bg-red-800 transition text-[11px] sm:text-sm"
+              >
+                Reiniciar
+              </button>
+            )}
+          </div>
         </div>
-      </div>
 
       {syncMessage && (
         <div className="bg-blue-50 p-3 rounded-xl border border-blue-200 text-sm font-bold text-blue-800 text-center">

@@ -75,7 +75,7 @@ export function RankingView({ users, currentUser, officialChampion, isAdmin }: R
             <Info className="w-6 h-6" />
           </button>
         </div>
-        <h2 className="text-3xl font-black text-primary tracking-tight">RANKING GLOBAL</h2>
+        <h2 className="text-2xl md:text-3xl font-black text-primary tracking-tight">RANKING GLOBAL</h2>
         <p className="text-slate-500 mt-2 font-medium">Demuestra quién sabe más de fútbol</p>
       </div>
 
@@ -165,6 +165,9 @@ export function RankingView({ users, currentUser, officialChampion, isAdmin }: R
                       <>
                         <span className="text-[9px] bg-surface text-primary border border-surface-dim px-1 py-0.5 rounded font-bold uppercase truncate hidden sm:inline">
                           🏆 {TEAMS[user.championPrediction].name}
+                        </span>
+                        <span className="text-[9px] bg-surface text-primary border border-surface-dim px-1 py-0.5 rounded font-bold uppercase sm:hidden shrink-0" title={TEAMS[user.championPrediction].name}>
+                          🏆{TEAMS[user.championPrediction].code}
                         </span>
                         {officialChampion === user.championPrediction && (
                           <span className="text-[9px] text-green-700 font-bold bg-green-100 px-1 py-0.5 rounded shrink-0">+5</span>
