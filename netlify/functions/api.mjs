@@ -163,6 +163,39 @@ export const handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify({ success: true, saved: savedIds, locked: lockedIds }) };
     }
 
+    // POST /api/admin/predictions (overwrite any user's predictions)
+    if (path === 'admin/predictions' && method === 'POST') {
+      const { userId, predictions } = body;
+      if (!userId || !predictions) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'userId y predictions requeridos.' }) };
+      }
+
+      const rows = predictions
+        .filter(p => p.matchId && p.scoreA !== undefined && p.scoreA !== '' && p.scoreB !== undefined && p.scoreB !== '')
+        .map(p => ({
+          user_id: userId,
+          match_id: p.matchId,
+          score_a: p.scoreA ?? null,
+          score_b: p.scoreB ?? null,
+          penalties_winner: p.penaltiesWinner || null,
+        }));
+
+      for (const row of rows) {
+        await supabase
+          .from('prediction_data')
+          .delete()
+          .eq('user_id', row.user_id)
+          .eq('match_id', row.match_id);
+      }
+
+      if (rows.length > 0) {
+        const { error } = await supabase.from('prediction_data').insert(rows);
+        if (error) throw error;
+      }
+
+      return { statusCode: 200, body: JSON.stringify({ success: true, saved: rows.map(r => r.match_id) }) };
+    }
+
     // POST /api/champion (first save locks it)
     if (path === 'champion' && method === 'POST') {
       const { userId, championTeamId } = body;
@@ -186,6 +219,26 @@ export const handler = async (event) => {
 
       if (error) throw error;
       return { statusCode: 200, body: JSON.stringify({ success: true, locked: false }) };
+    }
+
+    // POST /api/admin/champion (overwrite any user's champion)
+    if (path === 'admin/champion' && method === 'POST') {
+      const { userId, championTeamId } = body;
+      if (!userId) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'userId requerido.' }) };
+      }
+
+      await supabase.from('champion_data').delete().eq('user_id', userId);
+
+      if (championTeamId) {
+        const { error } = await supabase.from('champion_data').insert({
+          user_id: userId,
+          champion_team_id: championTeamId,
+        });
+        if (error) throw error;
+      }
+
+      return { statusCode: 200, body: JSON.stringify({ success: true }) };
     }
 
     // POST /api/matches

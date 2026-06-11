@@ -494,6 +494,8 @@ export default function App() {
             matches={matches}
             users={calculatedUsers}
             allUserPredictions={allUserPredictions}
+            allParticipants={allParticipants}
+            championMap={championMap}
             onUpdateResults={handleAdminUpdateResults}
             onAddMatch={handleAdminAddMatch}
             onDeleteMatch={handleAdminDeleteMatch}

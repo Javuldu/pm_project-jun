@@ -7,6 +7,8 @@ interface AdminPanelProps {
   matches: Match[];
   users: User[];
   allUserPredictions: Record<string, Prediction[]>;
+  allParticipants: {id: string; name: string}[];
+  championMap: Record<string, string>;
   onUpdateResults: (matches: Match[]) => void;
   onAddMatch: (match: Omit<Match, 'id'>) => void;
   onDeleteMatch?: (matchId: string) => void;
@@ -16,9 +18,13 @@ interface AdminPanelProps {
   onShowPopup: (msg: string) => void;
 }
 
-export function AdminPanelView({ matches, users, allUserPredictions, onUpdateResults, onAddMatch, onDeleteMatch, onResetData, officialChampion, onSetOfficialChampion, onShowPopup }: AdminPanelProps) {
+export function AdminPanelView({ matches, users, allUserPredictions, allParticipants, championMap, onUpdateResults, onAddMatch, onDeleteMatch, onResetData, officialChampion, onSetOfficialChampion, onShowPopup }: AdminPanelProps) {
   const [localMatches, setLocalMatches] = useState<Match[]>(matches);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editUserId, setEditUserId] = useState<string>('');
+  const [editPredictions, setEditPredictions] = useState<Prediction[]>([]);
+  const [editChampion, setEditChampion] = useState<string>('');
+  const [savingUser, setSavingUser] = useState(false);
   
   const [newTeamA, setNewTeamA] = useState<string>('');
   const [newTeamB, setNewTeamB] = useState<string>('');
@@ -80,6 +86,69 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
   React.useEffect(() => {
     setLocalMatches(matches);
   }, [matches]);
+
+  React.useEffect(() => {
+    if (editUserId) {
+      const preds = allUserPredictions[editUserId] || [];
+      setEditPredictions(preds.map(p => ({ ...p })));
+      setEditChampion(championMap[editUserId] || '');
+    } else {
+      setEditPredictions([]);
+      setEditChampion('');
+    }
+  }, [editUserId, allUserPredictions, championMap]);
+
+  const handleEditScoreChange = (matchId: string, team: 'A' | 'B', value: string) => {
+    if (value !== '' && !/^\d+$/.test(value)) return;
+    const numValue = value === '' ? '' : parseInt(value, 10);
+    setEditPredictions(prev => {
+      const existing = prev.find(p => p.matchId === matchId) || { matchId };
+      const updated = { ...existing, [team === 'A' ? 'scoreA' : 'scoreB']: numValue };
+      return [...prev.filter(p => p.matchId !== matchId), updated];
+    });
+  };
+
+  const handleEditPenaltiesChange = (matchId: string, winnerId: string) => {
+    setEditPredictions(prev => {
+      const existing = prev.find(p => p.matchId === matchId) || { matchId };
+      return [...prev.filter(p => p.matchId !== matchId), { ...existing, penaltiesWinner: winnerId }];
+    });
+  };
+
+  const handleSaveUserPredictions = async () => {
+    if (!editUserId) return;
+    setSavingUser(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      const api = (path: string) => API_URL ? `${API_URL}${path}` : path;
+
+      const predRes = await fetch(api('/api/admin/predictions'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: editUserId, predictions: editPredictions }),
+      });
+      const predData = await predRes.json();
+
+      const champRes = await fetch(api('/api/admin/champion'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: editUserId, championTeamId: editChampion || null }),
+      });
+      const champData = await champRes.json();
+
+      if (predData.success && champData.success) {
+        onShowPopup(`Pronósticos y campeón de ${users.find(u => u.id === editUserId)?.name || editUserId} actualizados.`);
+      } else {
+        onShowPopup('Error al guardar.');
+      }
+    } catch {
+      onShowPopup('Error de conexión.');
+    } finally {
+      setSavingUser(false);
+    }
+  };
+
+  const getEditPrediction = (matchId: string) => editPredictions.find(p => p.matchId === matchId) || {};
 
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
@@ -333,6 +402,106 @@ export function AdminPanelView({ matches, users, allUserPredictions, onUpdateRes
               Crear Partido
             </button>
           </form>
+        )}
+      </div>
+
+      <div className="bg-indigo-50 p-5 rounded-xl border border-indigo-200 shadow-sm">
+        <h3 className="font-bold text-slate-700 mb-4">Editar Pronósticos de un Participante</h3>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
+          <select
+            value={editUserId}
+            onChange={e => setEditUserId(e.target.value)}
+            className="w-full sm:w-64 border border-slate-200 rounded-lg p-2 text-sm font-bold text-slate-700 bg-white"
+          >
+            <option value="">Seleccionar participante...</option>
+            {allParticipants.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          {editUserId && (
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-slate-500">Campeón:</span>
+              <select
+                value={editChampion}
+                onChange={e => setEditChampion(e.target.value)}
+                className="border border-slate-200 rounded p-1.5 text-xs font-bold text-primary bg-white"
+              >
+                <option value="">Ninguno...</option>
+                {Object.entries(TEAMS).map(([key, t]) => (
+                  <option key={key} value={key}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {editUserId && (
+          <div className="space-y-3">
+            {localMatches.map(match => {
+              const pred = getEditPrediction(match.id);
+              const isDraw = pred.scoreA !== undefined && pred.scoreB !== undefined && pred.scoreA === pred.scoreB && pred.scoreA !== '';
+              const needsPenalties = match.stage !== 'Grupos' && isDraw;
+              return (
+                <div key={match.id} className="bg-white rounded-lg border border-slate-100 p-3 shadow-sm">
+                  <div className="text-[10px] font-bold text-slate-400 uppercase mb-2">{match.stage} · {match.teamA.code} vs {match.teamB.code}</div>
+                  <div className="flex items-center justify-between max-w-xs mx-auto gap-2">
+                    <div className="flex flex-col items-center gap-1 w-1/3">
+                      <div className="w-8 h-8 rounded-full border border-surface-dim bg-white flex items-center justify-center font-black text-[10px] text-primary shadow-sm">
+                        {match.teamA.code}
+                      </div>
+                      <span className="font-semibold text-[10px] text-center leading-tight">{match.teamA.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text" inputMode="numeric" maxLength={2}
+                        value={pred.scoreA ?? ''}
+                        onChange={(e) => handleEditScoreChange(match.id, 'A', e.target.value)}
+                        className="w-10 h-10 text-center text-base font-bold border border-slate-300 rounded focus:border-indigo-500 outline-none bg-white"
+                        placeholder="-"
+                      />
+                      <span className="text-slate-300 font-black text-xs">-</span>
+                      <input
+                        type="text" inputMode="numeric" maxLength={2}
+                        value={pred.scoreB ?? ''}
+                        onChange={(e) => handleEditScoreChange(match.id, 'B', e.target.value)}
+                        className="w-10 h-10 text-center text-base font-bold border border-slate-300 rounded focus:border-indigo-500 outline-none bg-white"
+                        placeholder="-"
+                      />
+                    </div>
+                    <div className="flex flex-col items-center gap-1 w-1/3">
+                      <div className="w-8 h-8 rounded-full border border-surface-dim bg-white flex items-center justify-center font-black text-[10px] text-primary shadow-sm">
+                        {match.teamB.code}
+                      </div>
+                      <span className="font-semibold text-[10px] text-center leading-tight">{match.teamB.name}</span>
+                    </div>
+                  </div>
+                  {needsPenalties && (
+                    <div className="mt-2 flex items-center justify-center gap-2">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">Clasifica:</span>
+                      <select
+                        value={pred.penaltiesWinner || ''}
+                        onChange={(e) => handleEditPenaltiesChange(match.id, e.target.value)}
+                        className="border border-slate-200 rounded p-1 text-[10px] font-bold text-primary bg-white"
+                      >
+                        <option value="">Elegir...</option>
+                        <option value={match.teamA.id}>{match.teamA.name}</option>
+                        <option value={match.teamB.id}>{match.teamB.name}</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <div className="flex justify-center pt-2">
+              <button
+                onClick={handleSaveUserPredictions}
+                disabled={savingUser}
+                className="bg-indigo-600 text-white font-bold py-2.5 px-6 rounded-lg shadow-sm hover:bg-indigo-700 transition disabled:opacity-50 text-sm"
+              >
+                {savingUser ? 'Guardando...' : `Guardar Pronósticos de ${allParticipants.find(p => p.id === editUserId)?.name || ''}`}
+              </button>
+            </div>
+          </div>
         )}
       </div>
 

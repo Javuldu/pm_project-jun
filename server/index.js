@@ -220,6 +220,45 @@ app.post('/api/predictions', async (req, res) => {
   }
 });
 
+// ─── Admin: overwrite any user's predictions ───
+app.post('/api/admin/predictions', async (req, res) => {
+  const { userId, predictions } = req.body;
+  if (!userId || !predictions) {
+    return res.status(400).json({ error: 'userId y predictions requeridos.' });
+  }
+
+  try {
+    const rows = predictions
+      .filter(p => p.matchId && p.scoreA !== undefined && p.scoreA !== '' && p.scoreB !== undefined && p.scoreB !== '')
+      .map(p => ({
+        user_id: userId,
+        match_id: p.matchId,
+        score_a: p.scoreA ?? null,
+        score_b: p.scoreB ?? null,
+        penalties_winner: p.penaltiesWinner || null,
+      }));
+
+    // Delete existing predictions for these matches first, then insert
+    for (const row of rows) {
+      await supabase
+        .from('prediction_data')
+        .delete()
+        .eq('user_id', row.user_id)
+        .eq('match_id', row.match_id);
+    }
+
+    if (rows.length > 0) {
+      const { error } = await supabase.from('prediction_data').insert(rows);
+      if (error) throw error;
+    }
+
+    res.json({ success: true, saved: rows.map(r => r.match_id) });
+  } catch (err) {
+    console.error('Admin save predictions error:', err);
+    res.status(500).json({ error: 'Error al guardar pronósticos como admin.' });
+  }
+});
+
 // ─── Save champion prediction (first save locks it) ───
 app.post('/api/champion', async (req, res) => {
   const { userId, championTeamId } = req.body;
@@ -247,6 +286,32 @@ app.post('/api/champion', async (req, res) => {
   } catch (err) {
     console.error('Save champion error:', err);
     res.status(500).json({ error: 'Error al guardar campeón.' });
+  }
+});
+
+// ─── Admin: overwrite any user's champion ───
+app.post('/api/admin/champion', async (req, res) => {
+  const { userId, championTeamId } = req.body;
+  if (!userId) {
+    return res.status(400).json({ error: 'userId requerido.' });
+  }
+
+  try {
+    // Delete existing champion for this user, then insert
+    await supabase.from('champion_data').delete().eq('user_id', userId);
+
+    if (championTeamId) {
+      const { error } = await supabase.from('champion_data').insert({
+        user_id: userId,
+        champion_team_id: championTeamId,
+      });
+      if (error) throw error;
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Admin save champion error:', err);
+    res.status(500).json({ error: 'Error al guardar campeón como admin.' });
   }
 });
 
