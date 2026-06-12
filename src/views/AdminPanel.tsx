@@ -437,7 +437,14 @@ export function AdminPanelView({ matches, users, allUserPredictions, allParticip
 
         {editUserId && (
           <div className="space-y-3">
-            {localMatches.map(match => {
+            {(() => {
+              const now = new Date();
+              const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+              const sorted = [...localMatches].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+              const future = sorted.filter(m => new Date(m.date) >= todayStart);
+              const past = sorted.filter(m => new Date(m.date) < todayStart);
+              const orderedMatches = [...future, ...past];
+              return orderedMatches.map(match => {
               const pred = getEditPrediction(match.id);
               const isDraw = pred.scoreA !== undefined && pred.scoreB !== undefined && pred.scoreA === pred.scoreB && pred.scoreA !== '';
               const needsPenalties = match.stage !== 'Grupos' && isDraw;
@@ -491,7 +498,7 @@ export function AdminPanelView({ matches, users, allUserPredictions, allParticip
                   )}
                 </div>
               );
-            })}
+            })})()}
             <div className="flex justify-center pt-2">
               <button
                 onClick={handleSaveUserPredictions}
