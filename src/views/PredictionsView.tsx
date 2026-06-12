@@ -20,7 +20,17 @@ export function PredictionsView({ matches, userPredictions, onSavePredictions, o
   }, [userPredictions]);
 
   // Extract all unique dates
-  const allDates = Array.from(new Set(matches.map(m => m.date.split('T')[0]))).sort().reverse();
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const sortFutureFirst = (dates: string[]) => dates.sort((a, b) => {
+    const aDate = new Date(`${a}T12:00:00`);
+    const bDate = new Date(`${b}T12:00:00`);
+    const aIsFuture = aDate >= todayStart;
+    const bIsFuture = bDate >= todayStart;
+    if (aIsFuture !== bIsFuture) return aIsFuture ? -1 : 1;
+    return aDate.getTime() - bDate.getTime();
+  });
+  const allDates = sortFutureFirst(Array.from(new Set(matches.map(m => m.date.split('T')[0]))));
   const [selectedDate, setSelectedDate] = useState<string>('todos');
 
   const matchesForDay = selectedDate === 'todos' ? matches : matches.filter(m => m.date.startsWith(selectedDate));
@@ -120,12 +130,12 @@ export function PredictionsView({ matches, userPredictions, onSavePredictions, o
           </div>
         ) : (
           <div className="space-y-8">
-            {Object.keys(matchesForDay.reduce((acc, match) => {
+            {sortFutureFirst(Object.keys(matchesForDay.reduce((acc, match) => {
               const date = match.date.split('T')[0];
               if (!acc[date]) acc[date] = [];
               acc[date].push(match);
               return acc;
-            }, {} as Record<string, Match[]>)).sort().map(dateStr => {
+            }, {} as Record<string, Match[]>))).map(dateStr => {
               const matchesInDate = matchesForDay.filter(m => m.date.startsWith(dateStr));
               const dateObj = new Date(`${dateStr}T12:00:00`);
               const formattedDate = dateObj.toLocaleDateString('es-EC', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
