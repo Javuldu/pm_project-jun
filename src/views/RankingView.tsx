@@ -12,7 +12,7 @@ interface RankingViewProps {
 
 export function RankingView({ users, currentUser, officialChampion, isAdmin }: RankingViewProps) {
   const [showRules, setShowRules] = useState(false);
-  const sortedUsers = [...users].sort((a, b) => b.points - a.points);
+  const sortedUsers = [...users].sort((a, b) => b.points - a.points || b.exactHits - a.exactHits);
   const officialTeam = officialChampion ? TEAMS[officialChampion] : null;
 
   const handleExportRanking = () => {
