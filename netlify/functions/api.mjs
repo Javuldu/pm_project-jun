@@ -5,6 +5,30 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+async function getAllRows(table, select = '*', opts = {}) {
+  const pageSize = 1000;
+  let all = [];
+  let from = 0;
+  let to = pageSize - 1;
+  try {
+    while (true) {
+      const { data, error } = await supabase
+        .from(table)
+        .select(select, opts)
+        .range(from, to);
+      if (error) return { data: null, error };
+      if (!data || data.length === 0) break;
+      all = all.concat(data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+      to += pageSize;
+    }
+    return { data: all, error: null };
+  } catch (err) {
+    return { data: null, error: err };
+  }
+}
+
 function getId(path) {
   const parts = path.split('/').filter(Boolean);
   return parts[parts.length - 1];
@@ -75,7 +99,7 @@ export const handler = async (event) => {
       const [matchesRes, participantsRes, predictionsRes, championRes, configRes] = await Promise.all([
         supabase.from('match_data').select('*').order('date', { ascending: false }),
         supabase.from('participants').select('id, name').order('id'),
-        supabase.from('prediction_data').select('*'),
+        getAllRows('prediction_data'),
         supabase.from('champion_data').select('*'),
         supabase.from('app_config').select('*'),
       ]);
