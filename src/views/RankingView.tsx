@@ -137,15 +137,18 @@ export function RankingView({ users, currentUser, officialChampion, isAdmin }: R
           {sortedUsers.map((user, index) => {
             const isCurrent = currentUser ? user.id === currentUser.id : false;
             const position = index + 1;
-            let medalStr = '';
-            if (position === 1) medalStr = '🥇';
-            else if (position === 2) medalStr = '🥈';
-            else if (position === 3) medalStr = '🥉';
+            const isTop10 = position <= 10;
+            let icon: string | number;
+            if (position === 1) icon = '🥇';
+            else if (position === 2) icon = '🥈';
+            else if (position === 3) icon = '🥉';
+            else if (isTop10) icon = '⚽';
+            else icon = position;
 
             return (
-              <div key={user.id} className={`flex items-center justify-between px-3 py-2.5 ${isCurrent ? 'bg-blue-50/50' : 'hover:bg-slate-50'}`}>
-                <div className="w-8 text-center font-bold text-slate-400 text-sm shrink-0">
-                  {medalStr || position}
+              <div key={user.id} className={`flex items-center justify-between px-3 py-2.5 ${isCurrent ? 'bg-blue-50/50' : isTop10 ? 'bg-amber-50/40 hover:bg-amber-50/80' : 'hover:bg-slate-50'}`}>
+                <div className={`w-8 text-center font-bold text-sm shrink-0 ${isTop10 ? 'text-amber-700' : 'text-slate-400'}`}>
+                  {icon}
                 </div>
                 
                 <div className="flex-1 flex items-center gap-2 min-w-0">
