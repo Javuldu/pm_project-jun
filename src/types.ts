@@ -1,4 +1,4 @@
-export type Stage = 'Grupos' | 'Octavos' | 'Cuartos' | 'Semifinal' | 'Final';
+export type Stage = 'Grupos' | 'Dieciseisavos' | 'Octavos' | 'Cuartos' | 'Semifinal' | 'Final';
 
 export interface Team {
   id: string;

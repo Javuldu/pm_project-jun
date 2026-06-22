@@ -139,10 +139,7 @@ export function RankingView({ users, currentUser, officialChampion, isAdmin }: R
             const position = index + 1;
             const isTop10 = position <= 10;
             let icon: string | number;
-            if (position === 1) icon = '🥇';
-            else if (position === 2) icon = '🥈';
-            else if (position === 3) icon = '🥉';
-            else if (isTop10) icon = '⚽';
+            if (isTop10) icon = '⚽';
             else icon = position;
 
             return (

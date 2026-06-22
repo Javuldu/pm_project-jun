@@ -391,6 +391,7 @@ export function AdminPanelView({ matches, users, allUserPredictions, allParticip
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Fase</label>
                 <select required value={newStage} onChange={e => setNewStage(e.target.value as Stage)} className="w-full border rounded p-2 text-sm bg-surface">
                   <option value="Grupos">Grupos</option>
+                  <option value="Dieciseisavos">Dieciseisavos</option>
                   <option value="Octavos">Octavos</option>
                   <option value="Cuartos">Cuartos</option>
                   <option value="Semifinal">Semifinal</option>
