@@ -157,32 +157,29 @@ export function RankingView({ users, currentUser, officialChampion, isAdmin, eli
                       <UserCircle className="w-5 h-5" />
                     </div>
                   )}
-                  <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                  <div className="flex items-center gap-1.5 min-w-0 overflow-hidden flex-nowrap">
                     <span className={`font-bold text-sm truncate ${isCurrent ? 'text-primary' : 'text-slate-800'}`}>
                       {user.name}
                       {isCurrent && <span className="ml-1 text-[9px] bg-primary text-white px-1.5 py-0.5 rounded-full shadow-sm align-middle">TÚ</span>}
                     </span>
                     {user.championPrediction && TEAMS[user.championPrediction] && (
                       <>
-                        <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase truncate hidden sm:inline border ${
+                        <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase truncate hidden sm:inline border whitespace-nowrap ${
                           eliminatedTeams.includes(user.championPrediction)
                             ? 'bg-red-100 text-red-700 border-red-200 line-through'
                             : 'bg-surface text-primary border-surface-dim'
                         }`}>
-                          🏆 {eliminatedTeams.includes(user.championPrediction) ? '✗ ' : ''}{TEAMS[user.championPrediction].name}
+                          🏆{eliminatedTeams.includes(user.championPrediction) ? '✗ ' : ''}{TEAMS[user.championPrediction].name}
                         </span>
-                        <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase sm:hidden shrink-0 border ${
+                        <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase sm:hidden shrink-0 border whitespace-nowrap ${
                           eliminatedTeams.includes(user.championPrediction)
                             ? 'bg-red-100 text-red-700 border-red-200 line-through'
                             : 'bg-surface text-primary border-surface-dim'
                         }`} title={TEAMS[user.championPrediction].name}>
                           🏆{eliminatedTeams.includes(user.championPrediction) ? '✗' : ''}{TEAMS[user.championPrediction].code}
                         </span>
-                        {eliminatedTeams.includes(user.championPrediction) && (
-                          <span className="text-[9px] text-red-700 font-bold bg-red-100 px-1 py-0.5 rounded shrink-0 border border-red-200">ELIM</span>
-                        )}
                         {officialChampion === user.championPrediction && (
-                          <span className="text-[9px] text-green-700 font-bold bg-green-100 px-1 py-0.5 rounded shrink-0">+5</span>
+                          <span className="text-[9px] text-green-700 font-bold bg-green-100 px-1 py-0.5 rounded shrink-0 whitespace-nowrap">+5</span>
                         )}
                       </>
                     )}
