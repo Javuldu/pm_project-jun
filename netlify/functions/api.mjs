@@ -348,6 +348,31 @@ export const handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify({ success: true, message: 'Datos reiniciados correctamente.' }) };
     }
 
+    // GET /api/eliminated-teams
+    if (path === 'eliminated-teams' && method === 'GET') {
+      const { data, error } = await supabase
+        .from('app_config')
+        .select('value')
+        .eq('key', 'eliminated_teams')
+        .maybeSingle();
+      if (error) throw error;
+      const teams = data?.value ? JSON.parse(data.value) : [];
+      return { statusCode: 200, body: JSON.stringify({ teams }) };
+    }
+
+    // POST /api/eliminated-teams
+    if (path === 'eliminated-teams' && method === 'POST') {
+      const { teams } = body;
+      if (!Array.isArray(teams)) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'teams debe ser un array.' }) };
+      }
+      const { error } = await supabase
+        .from('app_config')
+        .upsert({ key: 'eliminated_teams', value: JSON.stringify(teams) }, { onConflict: 'key' });
+      if (error) throw error;
+      return { statusCode: 200, body: JSON.stringify({ success: true }) };
+    }
+
     return { statusCode: 404, body: JSON.stringify({ error: 'Ruta no encontrada.' }) };
   } catch (err) {
     console.error('API function error:', err);
