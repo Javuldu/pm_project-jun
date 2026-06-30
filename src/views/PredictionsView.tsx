@@ -15,6 +15,7 @@ interface PredictionsViewProps {
 export function PredictionsView({ matches, userPredictions, onSavePredictions, onSaveChampion, championPrediction, confirmedMatchIds = [], eliminatedTeams = [] }: PredictionsViewProps) {
   const [localPredictions, setLocalPredictions] = useState<Prediction[]>(userPredictions);
   const [champion, setChampion] = useState<string>(championPrediction || '');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setLocalPredictions(userPredictions);
@@ -252,10 +253,16 @@ export function PredictionsView({ matches, userPredictions, onSavePredictions, o
 
       <div className="flex justify-center pt-2">
         <button 
-          onClick={() => onSavePredictions(localPredictions)}
-          className="bg-primary text-white font-bold py-3.5 px-8 rounded-full shadow-lg hover:bg-primary-container transition-transform active:scale-95 flex items-center gap-2"
+          onClick={async () => {
+            if (saving) return;
+            setSaving(true);
+            await onSavePredictions(localPredictions);
+            setSaving(false);
+          }}
+          disabled={saving}
+          className={`text-white font-bold py-3.5 px-8 rounded-full shadow-lg transition-all flex items-center gap-2 ${saving ? 'bg-slate-400 cursor-not-allowed' : 'bg-primary hover:bg-primary-container active:scale-95'}`}
         >
-          <span>✅</span> Confirmar Todos los Partidos
+          {saving ? '⏳' : '✅'} {saving ? 'Guardando...' : 'Confirmar Todos los Partidos'}
         </button>
       </div>
 
