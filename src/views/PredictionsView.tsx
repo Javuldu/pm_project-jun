@@ -9,9 +9,10 @@ interface PredictionsViewProps {
   onSaveChampion: (championId: string) => void;
   championPrediction?: string;
   confirmedMatchIds?: string[];
+  eliminatedTeams?: string[];
 }
 
-export function PredictionsView({ matches, userPredictions, onSavePredictions, onSaveChampion, championPrediction, confirmedMatchIds = [] }: PredictionsViewProps) {
+export function PredictionsView({ matches, userPredictions, onSavePredictions, onSaveChampion, championPrediction, confirmedMatchIds = [], eliminatedTeams = [] }: PredictionsViewProps) {
   const [localPredictions, setLocalPredictions] = useState<Prediction[]>(userPredictions);
   const [champion, setChampion] = useState<string>(championPrediction || '');
 
@@ -100,6 +101,12 @@ export function PredictionsView({ matches, userPredictions, onSavePredictions, o
             </button>
           </div>
         </div>
+        {champion && eliminatedTeams.includes(champion) && (
+          <div className="w-full bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2 text-sm font-bold text-red-700">
+            <span>⚠️</span>
+            <span>{TEAMS[champion]?.name || champion} ha sido eliminado del torneo.</span>
+          </div>
+        )}
       </div>
 
       <div>

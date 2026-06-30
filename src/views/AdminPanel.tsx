@@ -16,9 +16,11 @@ interface AdminPanelProps {
   officialChampion: string;
   onSetOfficialChampion: (id: string) => void;
   onShowPopup: (msg: string) => void;
+  eliminatedTeams: string[];
+  onSetEliminatedTeams: (teams: string[]) => void;
 }
 
-export function AdminPanelView({ matches, users, allUserPredictions, allParticipants, championMap, onUpdateResults, onAddMatch, onDeleteMatch, onResetData, officialChampion, onSetOfficialChampion, onShowPopup }: AdminPanelProps) {
+export function AdminPanelView({ matches, users, allUserPredictions, allParticipants, championMap, onUpdateResults, onAddMatch, onDeleteMatch, onResetData, officialChampion, onSetOfficialChampion, onShowPopup, eliminatedTeams, onSetEliminatedTeams }: AdminPanelProps) {
   const [localMatches, setLocalMatches] = useState<Match[]>(matches);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editUserId, setEditUserId] = useState<string>('');
@@ -354,6 +356,39 @@ export function AdminPanelView({ matches, users, allUserPredictions, allParticip
              <option value="">Aún sin definir...</option>
              {Object.entries(TEAMS).map(([key, t]) => <option key={key} value={key}>{t.name}</option>)}
            </select>
+        </div>
+      </div>
+
+      <div className="bg-red-50 p-5 rounded-xl border border-red-200 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-red-800">Equipos Eliminados</h3>
+          <span className="text-xs font-bold text-red-600 bg-white px-2 py-1 rounded-full border border-red-200">
+            {eliminatedTeams.length} eliminados
+          </span>
+        </div>
+        <p className="text-xs text-red-700 mb-4">Selecciona los equipos eliminados del torneo. Los participantes que eligieron a estos equipos como campeón se marcarán en rojo.</p>
+        <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto mb-4 p-2 bg-white rounded-lg border border-red-100">
+          {Object.entries(TEAMS).sort(([,a], [,b]) => a.name.localeCompare(b.name)).map(([key, team]) => {
+            const isEliminated = eliminatedTeams.includes(key);
+            return (
+              <button
+                key={key}
+                onClick={() => {
+                  const next = isEliminated
+                    ? eliminatedTeams.filter(t => t !== key)
+                    : [...eliminatedTeams, key];
+                  onSetEliminatedTeams(next);
+                }}
+                className={`text-[11px] font-bold px-2.5 py-1 rounded-full border transition-all ${
+                  isEliminated
+                    ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-red-300'
+                }`}
+              >
+                {team.code}
+              </button>
+            );
+          })}
         </div>
       </div>
 

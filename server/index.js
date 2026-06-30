@@ -506,6 +506,40 @@ app.post('/api/reset', async (req, res) => {
   }
 });
 
+// ─── Eliminated teams ───
+app.get('/api/eliminated-teams', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('app_config')
+      .select('value')
+      .eq('key', 'eliminated_teams')
+      .maybeSingle();
+    if (error) throw error;
+    const teams = data?.value ? JSON.parse(data.value) : [];
+    res.json({ teams });
+  } catch (err) {
+    console.error('Load eliminated teams error:', err);
+    res.status(500).json({ error: 'Error al cargar equipos eliminados.' });
+  }
+});
+
+app.post('/api/eliminated-teams', async (req, res) => {
+  const { teams } = req.body;
+  if (!Array.isArray(teams)) {
+    return res.status(400).json({ error: 'teams debe ser un array.' });
+  }
+  try {
+    const { error } = await supabase
+      .from('app_config')
+      .upsert({ key: 'eliminated_teams', value: JSON.stringify(teams) }, { onConflict: 'key' });
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Save eliminated teams error:', err);
+    res.status(500).json({ error: 'Error al guardar equipos eliminados.' });
+  }
+});
+
 app.get('/api/health', (req, res) => res.send('OK'));
 
 const PORT = process.env.PORT || 4000;

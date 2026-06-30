@@ -32,6 +32,7 @@ export default function App() {
   const [confirmedMatchIds, setConfirmedMatchIds] = useState<string[]>([]);
   const [avatarMap, setAvatarMap] = useState<Record<string, string>>({});
   const [championMap, setChampionMap] = useState<Record<string, string>>({});
+  const [eliminatedTeams, setEliminatedTeams] = useState<string[]>([]);
 
   // Load common data + user-specific predictions from Supabase
   const loadData = useCallback(async (userId?: string) => {
@@ -254,13 +255,23 @@ export default function App() {
     } catch {}
   }, []);
 
+  const loadEliminatedTeams = useCallback(async () => {
+    try {
+      const res = await fetch(api('/api/eliminated-teams'));
+      const data = await res.json();
+      if (data.teams) setEliminatedTeams(data.teams);
+    } catch {}
+  }, []);
+
   const loadCommonData = useCallback(async () => {
     await loadAllData();
-  }, [loadAllData]);
+    await loadEliminatedTeams();
+  }, [loadAllData, loadEliminatedTeams]);
 
   const loadRankingData = useCallback(async () => {
     await loadAllData(currentUserId || undefined);
-  }, [loadAllData, currentUserId]);
+    await loadEliminatedTeams();
+  }, [loadAllData, currentUserId, loadEliminatedTeams]);
 
   const handleLoginAdmin = (password: string) => {
     if (password === 'admin28123') {
@@ -427,6 +438,17 @@ export default function App() {
     }
   };
 
+  const handleSetEliminatedTeams = async (teams: string[]) => {
+    setEliminatedTeams(teams);
+    try {
+      await fetch(api('/api/eliminated-teams'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teams }),
+      });
+    } catch {}
+  };
+
   const handleSetOfficialChampion = async (id: string) => {
     setOfficialChampion(id);
 
@@ -473,6 +495,7 @@ export default function App() {
             onSavePredictions={handleSavePredictions}
             onSaveChampion={handleSaveChampion}
             confirmedMatchIds={confirmedMatchIds}
+            eliminatedTeams={eliminatedTeams}
           />
         )}
 
@@ -482,6 +505,7 @@ export default function App() {
             currentUser={currentUser}
             officialChampion={officialChampion}
             isAdmin={isAdmin}
+            eliminatedTeams={eliminatedTeams}
           />
         )}
 
@@ -503,6 +527,8 @@ export default function App() {
             officialChampion={officialChampion}
             onSetOfficialChampion={handleSetOfficialChampion}
             onShowPopup={(msg) => setPopupMessage(msg)}
+            eliminatedTeams={eliminatedTeams}
+            onSetEliminatedTeams={handleSetEliminatedTeams}
           />
         )}
       </main>
